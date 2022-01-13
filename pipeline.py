@@ -8,35 +8,33 @@ from utils import *
 #         return get_df(dataset_name)
 
 
-def run_on_history(model, data):
-    events, dfs = data
+def run_on_history(model, events):
     from_date = events.date.min()
     end_date = events.date.max()
 
     to_date = timedelta(440, 0) + from_date
     init = events[(events.date < to_date) & (events.date > from_date)]
 
-    model.initialize(init, dfs)
+    model.initialize(init)
 
     preds = []
     targets = []
 
+    # for i in tqdm(range(10000)):
     while from_date <= end_date:
         from_date = to_date
         to_date = from_date + timedelta(10, 0)
+
         cur_events = events[(events.date < to_date) & (events.date > from_date)]
 
-        pred, target = model.process(cur_events, dfs)
-        preds.append(pred)
+        pred, target = model.process(cur_events)
+        preds += pred
         targets += target
-        if len(preds) > 10:
-            break
 
     return preds, targets
 
 
-def calculate_metrics(results):
-    pred, target = results
+def calculate_metrics_on_review(pred, target):
     res = np.zeros(5)
     for i, k in enumerate([1, 3, 5, 10]):
         if len(set(pred[:k]).intersection(set(target))):
@@ -44,8 +42,18 @@ def calculate_metrics(results):
     rr = np.inf
     for t in target:
         rr = min(rr, 1 + np.where(pred == t)[0])
-    res[4] = 1 / rr / 100
-    return res * 100
+    res[4] = 1 / rr
+    return res
+
+
+def calculate_metrics(results):
+    res = np.zeros(5)
+    cnt = 0
+    for pred, target in zip(*results):
+        if len(target) > 0:
+            res += calculate_metrics_on_review(pred, target)
+            cnt += 1
+    return res / cnt
 
 
 def run_experiments(model_class, hyperparameters=None, datasets=None):
@@ -56,8 +64,8 @@ def run_experiments(model_class, hyperparameters=None, datasets=None):
 
     res = {}
     for d in datasets:
-        data = get_data(d)
-        model = model_class(**hyperparameters)
+        data, files, users = get_data(d)
+        model = model_class(files, users, **hyperparameters)
         results = run_on_history(model, data)
         metrics = calculate_metrics(results)
         res[d] = metrics
