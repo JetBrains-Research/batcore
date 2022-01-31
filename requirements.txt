@@ -1,32 +1,35 @@
-Bottleneck @ file:///opt/concourse/worker/volumes/live/ac8c8ef3-2ed0-42e9-6ec0-5bb05ad938f6/volume/bottleneck_1607575111469/work
+Bottleneck==1.3.2
 certifi==2021.10.8
-cffi @ file:///opt/concourse/worker/volumes/live/976f8942-f51d-4f0e-7352-2a10f0820d0e/volume/cffi_1625814703974/work
+cffi==1.14.6
 cycler==0.10.0
 fonttools==4.25.0
 implicit==0.4.8
-joblib @ file:///tmp/build/80754af9/joblib_1594236160679/work
-kiwisolver @ file:///opt/concourse/worker/volumes/live/f8867fdb-2fa2-4145-73d9-4d6f6dad5f7c/volume/kiwisolver_1612282424136/work
-matplotlib @ file:///opt/concourse/worker/volumes/live/ea31f923-d5bd-4af7-6d95-b910b4a0fa5f/volume/matplotlib-suite_1628011455335/work
+joblib==0.16.0
+kiwisolver==1.3.1
+matplotlib==3.4.2
 mkl-fft==1.3.0
 mkl-random==1.0.2
 mkl-service==2.3.0
 munkres==1.1.4
-numexpr @ file:///opt/concourse/worker/volumes/live/25d8c196-e012-46eb-49ec-5cd2f6aea2e5/volume/numexpr_1614798497993/work
-numpy @ file:///opt/concourse/worker/volumes/live/4c9854be-7c57-4c34-5c96-c6010c527509/volume/numpy_and_numpy_base_1607448155669/work
-olefile @ file:///Users/ktietz/demo/mc3/conda-bld/olefile_1629805411829/work
+numexpr==2.7.3
+numpy==1.19.2
+olefile==0.46
 pandas==1.3.4
-Pillow @ file:///opt/concourse/worker/volumes/live/140f8506-0993-42b0-466b-ccbbcb5df83e/volume/pillow_1625655825783/work
-pyaml @ file:///home/linux1/recipes/ci/pyaml_1610972911625/work
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
-pyparsing @ file:///home/linux1/recipes/ci/pyparsing_1610983426697/work
-python-dateutil @ file:///home/ktietz/src/ci/python-dateutil_1611928101742/work
+Pillow==8.3.1
+pip==21.2.4
+pyaml==20.4.0
+pycparser==2.20
+pyparsing==2.4.7
+python-dateutil==2.8.1
 pytz==2020.1
 PyYAML==5.3.1
-scikit-learn @ file:///opt/concourse/worker/volumes/live/83f46a43-da2a-467b-5581-ed2cbd128684/volume/scikit-learn_1621370403088/work
-scipy @ file:///opt/concourse/worker/volumes/live/cdf7fdf2-5064-43cd-6b41-cf5dc3a53f0d/volume/scipy_1616703205693/work
-six @ file:///opt/concourse/worker/volumes/live/34b5b2b5-c9cb-44fb-4b8e-8a9a881bfa35/volume/six_1605205329242/work
-threadpoolctl @ file:///tmp/tmp9twdgx9k/threadpoolctl-2.1.0-py3-none-any.whl
-torch @ file:///opt/concourse/worker/volumes/live/1d78d466-29ec-4304-5675-668327ecb9b0/volume/pytorch_1622211061357/work
-tornado @ file:///opt/concourse/worker/volumes/live/2c1a63a2-006b-48ee-56b9-0cfe8b4927f9/volume/tornado_1606942321278/work
+scikit-learn==0.24.2
+scipy==1.6.2
+setuptools==58.0.4
+six==1.15.0
+threadpoolctl==2.1.0
+torch==1.7.1
+tornado==6.1
 tqdm==4.62.3
-typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1631814937681/work
+typing-extensions==3.10.0.2
+wheel==0.37.0
