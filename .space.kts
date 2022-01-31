@@ -17,7 +17,7 @@ job("Prepare Docker image") {
 }
 
 
-job("Run tests, build, publish") {
+job("Run tests") {
     startOn {
         gitPush { enabled = false }
     }
