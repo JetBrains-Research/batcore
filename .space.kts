@@ -30,7 +30,6 @@ job("Run tests") {
         shellScript {
             content = """
                 unzip beam.zip
-                mv beam github_csv
                 python run.py
             """
         }

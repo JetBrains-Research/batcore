@@ -24,8 +24,10 @@ def reshape(matrix, new_shape):
 
 def get_df(pr):
     dfs = {}
-    for df in os.listdir(f'github_csv/csv/github/apache/{pr}/2020-01-10'):
-        dfs[df.split('.')[0]] = pd.read_csv(f'github_csv/csv/github/apache/{pr}/2020-01-10/{df}', sep='|')
+    # for df in os.listdir(f'github_csv/csv/github/apache/{pr}/2020-01-10'):
+    #     dfs[df.split('.')[0]] = pd.read_csv(f'github_csv/csv/github/apache/{pr}/2020-01-10/{df}', sep='|')
+    for df in os.listdir(f'beam/csv/github/apache/{pr}/2020-01-10'):
+            dfs[df.split('.')[0]] = pd.read_csv(f'beam/csv/github/apache/{pr}/2020-01-10/{df}', sep='|')
 
     return dfs
 
