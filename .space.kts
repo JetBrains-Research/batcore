@@ -10,8 +10,8 @@ job("Prepare Docker image") {
             labels["vendor"] = "jbr"
         }
 
-        push("https://jetbrains.team/p/rrr/packages/container/rrrpython") {
-            tags("0.0.1")
+        push("registry.jetbrains.team/p/rrr/rrrpython/myimage") {
+            tags("latest")
         }
     }
 }
