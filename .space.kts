@@ -30,6 +30,7 @@ job("Run tests") {
         shellScript {
             content = """
                 unzip beam.zip
+                echo stat tests
                 python run.py
             """
         }
