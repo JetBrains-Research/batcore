@@ -15,3 +15,23 @@ job("Prepare Docker image") {
         }
     }
 }
+
+
+job("Run tests, build, publish") {
+    startOn {
+        gitPush { enabled = false }
+    }
+    container(image = "registry.jetbrains.team/p/rrr/rrrpython/myimage:latest") {
+        // specify URL of the package index using env var
+        env["URL"] = "https://packages.jetbrains.team/pypi/p/rrr/rrrpythonindex/simple"
+
+        // We suppose that your project has default build configuration -
+        // the built package is saved to the ./dist directory
+        shellScript {
+            content = """
+                echo Run tests...
+                python run.py
+            """
+        }
+    }
+}

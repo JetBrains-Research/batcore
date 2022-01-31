@@ -21,7 +21,7 @@ def run_on_history(model, events):
     targets = []
 
     # for i in tqdm(range(10000)):
-    # i = 0
+    i = 0
     while from_date <= end_date:
         from_date = to_date
         to_date = from_date + timedelta(10, 0)
@@ -31,9 +31,9 @@ def run_on_history(model, events):
         pred, target = model.process(cur_events)
         preds += pred
         targets += target
-        # i += 1
-        # if i > 10:
-        #     break
+        i += 1
+        if i > 10:
+            break
     return preds, targets
 
 
