@@ -29,6 +29,7 @@ job("Run tests") {
         // the built package is saved to the ./dist directory
         shellScript {
             content = """
+                python --version
                 echo Run tests...
                 python run.py
             """
