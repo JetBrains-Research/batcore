@@ -8,6 +8,7 @@ warnings.filterwarnings('ignore')
 
 
 if __name__ == '__main__':
+    print('start experiments')
     metrics = run_experiments(SparseRecommender, None, ['beam'])
     names = ['a@1', 'a@3', 'a@5', 'a@10', 'mrr']
     # with open('results/results.txt', 'w') as f:

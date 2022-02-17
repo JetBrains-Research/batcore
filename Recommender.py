@@ -59,7 +59,7 @@ class SparseRecommender:
 
     def process_event(self, event):
         if event.type == 'commit':
-            authors = event.author_login
+            authors = np.array([event.author_login])
             files = event.file_path
         else:
             authors = np.hstack((event.author_login, event.participant_login))
@@ -130,7 +130,6 @@ class SparseRecommender:
         self.add_files(commit_update)
         self.add_files(review_update)
 
-        self.commit_update = commit_update
         self.update(review_update, 'review')
         self.update(commit_update, 'commit')
 
@@ -159,7 +158,7 @@ class SparseRecommender:
         :return:
         """
 
-        reviewer_score = user_file_similarity[:, file_ids]
+        reviewer_score = user_file_similarity[:, file_ids]  # sort here and leave only top 10
         developer_score = user_user_similarity @ reviewer_score / (
                 user_user_similarity.sum(axis=1).reshape(-1, 1) + 1e-15)
 
