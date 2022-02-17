@@ -31,9 +31,9 @@ def run_on_history(model, events):
         pred, target = model.process(cur_events)
         preds += pred
         targets += target
-        i += 1
-        if i > 5:
-            break
+        # i += 1
+        # if i > 5:
+        #     break
     return preds, targets
 
 

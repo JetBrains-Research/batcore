@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     for params in product(*hyperparams.values()):
         param_dict = {arg: val for (arg, val) in zip(keys, params)}
-        print(f'Started test for {param_dict}\n')
+        print(f'Started test for {param_dict}\n', flush=True)
         model = SparseRecommender(files, users, **param_dict)
 
         results = run_on_history(model, data)
