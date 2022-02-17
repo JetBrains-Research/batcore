@@ -24,7 +24,7 @@ def run_on_history(model, events):
     i = 0
     while from_date <= end_date:
         from_date = to_date
-        to_date = from_date + timedelta(10, 0)
+        to_date = from_date + timedelta(7, 0)
 
         cur_events = events[(events.date < to_date) & (events.date > from_date)]
 
@@ -32,7 +32,7 @@ def run_on_history(model, events):
         preds += pred
         targets += target
         i += 1
-        if i > 10:
+        if i > 5:
             break
     return preds, targets
 

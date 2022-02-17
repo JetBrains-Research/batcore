@@ -3,7 +3,7 @@ import numpy as np
 
 class ObjectContainer:
     def __init__(self, objects):
-        self.id2obj = list(objects)
+        self.id2obj = np.array(list(objects))
         self.obj2id = {o: i for i, o in enumerate(objects)}
 
         self.contain_mask = np.zeros(len(objects), dtype=int)
