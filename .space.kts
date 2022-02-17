@@ -43,6 +43,7 @@ job("hyperparameters") {
         shellScript {
             content = """
                 unzip beam.zip
+                echo running hyper.py
                 python hyper.py
             """
         }
