@@ -10,11 +10,12 @@ from utils import *
 
 
 class SparseRecommender:
-    def __init__(self, files, users, d=128, eps=0.1, alpha=1, lam=1):
+    def __init__(self, files, users, d=50, eps=0.1, alpha=1, lam=100, iters=30):
         self.d = d  # embedding size
         self.eps = eps  # data scale
         self.alpha = alpha  # data scale
         self.lam = lam  # regularization
+        self.iters = iters # als iterations
 
         # developers and files containers
         self.files = files
@@ -139,8 +140,8 @@ class SparseRecommender:
             self.M_rev[self.M_rev_raw.nonzero()] = self.alpha * np.log(
                 self.M_rev_raw[self.M_rev_raw.nonzero()] / self.eps + 1)
 
-        self.als_rev = implicit.als.AlternatingLeastSquares(self.d, iterations=100, regularization=self.lam)
-        self.als_com = implicit.als.AlternatingLeastSquares(self.d, iterations=100, regularization=self.lam)
+        self.als_rev = implicit.als.AlternatingLeastSquares(self.d, iterations=self.iters, regularization=self.lam)
+        self.als_com = implicit.als.AlternatingLeastSquares(self.d, iterations=self.iters, regularization=self.lam)
 
         self.als_rev.fit(self.M_rev.T, show_progress=False)
         self.als_com.fit(self.M_com.T, show_progress=False)

@@ -16,7 +16,7 @@ if __name__ == '__main__':
     data, files, users = get_data('beam', True)
 
     # hyperparams = {'eps': [0.001], 'd': [128], 'alpha': [1], 'lam': [0.1]}
-    hyperparams = {'eps': [0.001, 0.01], 'd': [128, 256], 'alpha': [1], 'lam': [0.1, 1]}
+    hyperparams = {'eps': [0.001, 0.01], 'd': [50, 128], 'alpha': [1], 'lam': [100, 10], 'iters': [30]}
 
     keys = hyperparams.keys()
 
