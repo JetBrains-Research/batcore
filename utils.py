@@ -70,7 +70,22 @@ def get_data(path):
     commit_file_mapping = MappingWithFallback(file2id, id2file)
     pull_file_mapping = MappingWithFallback(file2id, id2file)
 
-    commit_user_mapping = MappingWithFallback(file2id, id2file)
-    pull_user_mapping = MappingWithFallback(file2id, id2file)
+    commit_user_mapping = Mapping(file2id, id2file)
+    pull_user_mapping = Mapping(file2id, id2file)
 
-    return pulls, commits, commit_user_mapping, pull_file_mapping, commit_file_mapping, pull_user_mapping
+    return pulls, commits, pull_user_mapping, commit_user_mapping, pull_file_mapping, commit_file_mapping
+
+
+# add reciprocal rank
+def count_metrics(res):
+    res = res.copy()
+    res['rev'] = res['rev'].apply(set)
+    for i in [1, 3, 5, 10]:
+        res[f'top-{i}'] = (res['rev'] - res[f'top-{i}'].apply(set)).apply(lambda x: len(x))
+
+    res['rev'] = res['rev'].apply(lambda x: len(x))
+
+    for i in [1, 3, 5, 10]:
+        res[f'top-{i}'] = res[f'top-{i}'] < res['rev']
+
+    return res.mean()
