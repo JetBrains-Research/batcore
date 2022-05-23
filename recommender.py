@@ -31,20 +31,21 @@ class CandidateRecommender():
         if np.all(np.isnan(items_factors_1)):
             return ([np.nan], [np.nan]), ([np.nan], [np.nan]), ([np.nan], [np.nan]), [np.nan]
 
-        users_1 = self._recommend(items_factors_1, self.users_factors_1, _filter_users)
-        #         print(users_1.shape)
+        max_user = self.users_factors_1.shape[0]
+
+        new_feats = self.users_factors_1[self.map_rev.mask[:max_user]]
+        new_ids = np.arange(len(self.map_rev.mask))[self.map_rev.mask]
+
+        users_1 = self._recommend(items_factors_1, new_feats, _filter_users)
+        users_1 = new_ids[users_1.astype(int)]
         scores_11 = self._users_scores(users_1, items_factors_1, self.users_factors_1)
-        #         print(scores_11.shape)
         users_12 = self.map_com.transform(users_1)
-        #         print(users_12.shape)
         users_common_1 = users_1[users_12.mask == False].reshape([-1])
         users_common_2 = users_12[users_12.mask == False].reshape([-1])
 
         if len(users_common_2):
             users_sim = self._similar_users(users_common_2, self.users_factors_2)
-            #             print(users_sim)
             users_sim_1 = self.map_rev.transform(users_sim)
-            #             print(users_sim_1)
             users_2 = users_sim[users_sim_1.mask == True]
             scores_22 = self._users_scores(users_2, items_factors_2, self.users_factors_2)
         else:
@@ -68,13 +69,12 @@ class CandidateRecommender():
                      for item_factors in items_factors[ids]]
 
         users = np.unique(np.array(users_all, copy=False))
-
         return users
 
-    def _recommend_users(self, users_factors: np.ndarray, item_factors: np.ndarray, weight: float, N: int,
+    @staticmethod
+    def _recommend_users(users_factors: np.ndarray, item_factors: np.ndarray, weight: float, N: int,
                          filter_users: set, without_score=False):
         scores = users_factors.dot(item_factors) * weight
-        #         print(scores.shape)
         count = N + len(filter_users)
         if count < len(scores):
             ids = np.argpartition(scores, -count)[-count:]
@@ -98,7 +98,8 @@ class CandidateRecommender():
 
         return np.array(scores)
 
-    def _similar_users(self, users, users_factors: np.ndarray, K=10):
+    @staticmethod
+    def _similar_users(users, users_factors: np.ndarray, K=10):
         users_factors_target = users_factors[users]
         sim_users = cosine_similarity(users_factors_target, users_factors)
         sim_users[:, users] = _MISSING_VALUE
@@ -114,7 +115,8 @@ class CandidateRecommender():
 
         return np.unique(users_similar)
 
-    def _empty_recommendations(self, size):
+    @staticmethod
+    def _empty_recommendations(size):
         recommendations = np.empty(size)
         recommendations[:] = np.nan
         return recommendations
@@ -182,12 +184,10 @@ def _recommend(model_reviews_als,
                model_commits_als,
                mapping_user_rev,
                mapping_user_com,
-               mapping_file_com,
+               mapping_file_rev,
                files_ids,
                N):
-    #     print(files_ids)
-    files_ids = mapping_file_com.transform(files_ids)
-    #     print(files_ids)
+    files_ids = mapping_file_rev.transform(files_ids)
 
     canrec = CandidateRecommender((model_reviews_als.user_factors,
                                    model_commits_als.user_factors),
@@ -207,7 +207,6 @@ def _recommend(model_reviews_als,
     #     emb_rev, emb_com = model_reviews_als.item_factors[files_ids], model_commits_als.item_factors[files_ids]
 
     cand = canrec.recommend((emb_rev, emb_com))
-
     ranrec = RankingRecommender((model_reviews_als.user_factors, model_commits_als.user_factors))
 
     return ranrec.recommend(cand, N=N)
