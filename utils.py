@@ -76,9 +76,18 @@ def get_data(path):
     return pulls, commits, pull_user_mapping, commit_user_mapping, pull_file_mapping, commit_file_mapping
 
 
-# add reciprocal rank
 def count_metrics(res):
     res = res.copy()
+
+    rrs = []
+    for _, row in res.iterrows():
+        rr = [np.inf]
+        for t in row['rev']:
+            rr = min(rr, 1 + np.where(row['top-10'] == t)[0])
+        #     break
+        rrs.append(1 / rr[0])
+    res['rr'] = rrs
+
     res['rev'] = res['rev'].apply(set)
     for i in [1, 3, 5, 10]:
         res[f'top-{i}'] = (res['rev'] - res[f'top-{i}'].apply(set)).apply(lambda x: len(x))
@@ -88,4 +97,5 @@ def count_metrics(res):
     for i in [1, 3, 5, 10]:
         res[f'top-{i}'] = res[f'top-{i}'] < res['rev']
 
+    res.drop('rev', axis=1)
     return res.mean()

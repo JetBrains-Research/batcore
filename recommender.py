@@ -44,7 +44,8 @@ class CandidateRecommender():
         users_common_2 = users_12[users_12.mask == False].reshape([-1])
 
         if len(users_common_2):
-            users_sim = self._similar_users(users_common_2, self.users_factors_2)
+
+            users_sim = self._similar_users(users_common_2, self.users_factors_2, self.map_com.mask)
             users_sim_1 = self.map_rev.transform(users_sim)
             users_2 = users_sim[users_sim_1.mask == True]
             scores_22 = self._users_scores(users_2, items_factors_2, self.users_factors_2)
@@ -71,8 +72,7 @@ class CandidateRecommender():
         users = np.unique(np.array(users_all, copy=False))
         return users
 
-    @staticmethod
-    def _recommend_users(users_factors: np.ndarray, item_factors: np.ndarray, weight: float, N: int,
+    def _recommend_users(self, users_factors: np.ndarray, item_factors: np.ndarray, weight: float, N: int,
                          filter_users: set, without_score=False):
         scores = users_factors.dot(item_factors) * weight
         count = N + len(filter_users)
@@ -98,11 +98,11 @@ class CandidateRecommender():
 
         return np.array(scores)
 
-    @staticmethod
-    def _similar_users(users, users_factors: np.ndarray, K=10):
+    def _similar_users(self, users, users_factors: np.ndarray, mask: np.ndarray, K=10):
         users_factors_target = users_factors[users]
         sim_users = cosine_similarity(users_factors_target, users_factors)
         sim_users[:, users] = _MISSING_VALUE
+        sim_users[:, ~mask[:sim_users.shape[1]]] = _MISSING_VALUE
 
         users_similar = []
         for _sim_users in sim_users:
@@ -115,8 +115,7 @@ class CandidateRecommender():
 
         return np.unique(users_similar)
 
-    @staticmethod
-    def _empty_recommendations(size):
+    def _empty_recommendations(self, size):
         recommendations = np.empty(size)
         recommendations[:] = np.nan
         return recommendations
@@ -188,28 +187,41 @@ def _recommend(model_reviews_als,
                files_ids,
                N):
     files_ids = mapping_file_rev.transform(files_ids)
+    #     print(files_ids)
 
     canrec = CandidateRecommender((model_reviews_als.user_factors,
                                    model_commits_als.user_factors),
                                   mapping_user_rev,
                                   mapping_user_com)
 
-    files_ids = np.array(files_ids)
-    l = len(files_ids)
-    emb_rev = np.zeros((l, model_reviews_als.item_factors.shape[1]))
-    emb_com = np.zeros((l, model_reviews_als.item_factors.shape[1]))
+    l = len(files_ids) - files_ids.mask.sum()
 
-    emb_rev[np.arange(l)[files_ids < model_reviews_als.item_factors.shape[0]]] = model_reviews_als.item_factors[
-        files_ids[files_ids < model_reviews_als.item_factors.shape[0]]]
-    emb_com[np.arange(l)[files_ids < model_commits_als.item_factors.shape[0]]] = model_commits_als.item_factors[
-        files_ids[files_ids < model_commits_als.item_factors.shape[0]]]
+    if l == 0:
+        return np.array([np.nan] * N)
+
+    #     emb_rev = np.zeros((l, model_reviews_als.item_factors.shape[1]))
+    #     emb_com = np.zeros((l, model_reviews_als.item_factors.shape[1]))
+    #         files_ids = np.array(files_ids)
+    mask_rev = (files_ids < model_reviews_als.item_factors.shape[0]) * ~files_ids.mask
+    mask_com = (files_ids < model_commits_als.item_factors.shape[0]) * ~files_ids.mask
+
+    #     emb_rev[np.arange(len(files_ids))[mask_rev]] = model_reviews_als.item_factors[files_ids[mask_rev]]
+    #     emb_com[np.arange(len(files_ids))[mask_com]] = model_commits_als.item_factors[files_ids[mask_com]]
+    try:
+        emb_rev = model_reviews_als.item_factors[files_ids[mask_rev]].copy()
+        emb_com = model_commits_als.item_factors[files_ids[mask_com]].copy()
+    except:
+        raise NameError('lol')
 
     #     emb_rev, emb_com = model_reviews_als.item_factors[files_ids], model_commits_als.item_factors[files_ids]
 
     cand = canrec.recommend((emb_rev, emb_com))
+    #     return cand
     ranrec = RankingRecommender((model_reviews_als.user_factors, model_commits_als.user_factors))
 
     return ranrec.recommend(cand, N=N)
+
+    #     print(files_ids)
 
 
 def recommend(x_df,
@@ -217,18 +229,17 @@ def recommend(x_df,
               model_commits_als,
               mapping_user_rev,
               mapping_user_com,
-              mapping_file_com,
+              mapping_file_rev,
               top_n):
     y_pred = []
     top_n_max = np.max(top_n)
 
     for i, (number, files, rev) in x_df.iterrows():
-        #         print(f"start {i}")
         _y_pred = _recommend(model_reviews_als,
                              model_commits_als,
                              mapping_user_rev,
                              mapping_user_com,
-                             mapping_file_com,
+                             mapping_file_rev,
                              files,
                              top_n_max)
 

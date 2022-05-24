@@ -54,13 +54,13 @@ for i in tqdm(range(10)):
     #     recommender = _build(model_reviews_als, mappings_reviews, model_commits_als, mappings_commits)
     #     print(4)
     res_cur = recommend(test_rec,
-                        model_commits_als,
+                        model_reviews_als,
                         model_commits_als,
                         mapping_user_rev,
                         mapping_user_com,
-                        mapping_file_com,
+                        mapping_file_rev,
                         [1, 3, 5, 10])
-    #     print(5)
+
     if res is None:
         res = res_cur
     else:

@@ -32,7 +32,7 @@ class MappingWithFallback(Mapping):
                 fallback = self._lc_tokens(self.id2item[value], values)
                 if len(fallback):
                     ids.extend([self.item2id[f] for f in fallback
-                                if self.item2id[f] not in ids])
+                                if self.item2id[f] not in ids and self.mask[self.item2id[f]]])
                 else:
                     ids.append(_MISSED_ID)
 
