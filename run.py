@@ -1,11 +1,14 @@
 from datetime import timedelta
-
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 from estimator import train_als
 from recommender import recommend
 from utils import get_data, count_metrics
+
+
+np.seterr(all='raise')
 
 path = '/Users/Farid.Bagirov/icsme2020/2020-01-10'
 

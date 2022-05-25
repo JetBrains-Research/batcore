@@ -20,6 +20,11 @@ class Mapping:
         ids = np.asarray([value if self.mask[value] else _MISSED_ID for value in X])
         return np.ma.masked_where(ids == _MISSED_ID, ids, copy=False)
 
+    def filter(self, X):
+        # ids = np.unique(X)
+        ids = np.array(X)
+        return ids[self.mask[ids]]
+
 
 class MappingWithFallback(Mapping):
     def transform(self, X, y=None, **kwargs):

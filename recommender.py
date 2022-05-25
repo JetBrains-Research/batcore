@@ -186,7 +186,9 @@ def _recommend(model_reviews_als,
                mapping_file_rev,
                files_ids,
                N):
+    files_ids_old = files_ids
     files_ids = mapping_file_rev.transform(files_ids)
+    files_ids_test = mapping_file_rev.filter(files_ids)
     #     print(files_ids)
 
     canrec = CandidateRecommender((model_reviews_als.user_factors,
@@ -202,26 +204,16 @@ def _recommend(model_reviews_als,
     #     emb_rev = np.zeros((l, model_reviews_als.item_factors.shape[1]))
     #     emb_com = np.zeros((l, model_reviews_als.item_factors.shape[1]))
     #         files_ids = np.array(files_ids)
-    mask_rev = (files_ids < model_reviews_als.item_factors.shape[0]) * ~files_ids.mask
-    mask_com = (files_ids < model_commits_als.item_factors.shape[0]) * ~files_ids.mask
+    mask_rev = (np.array(files_ids) < model_reviews_als.item_factors.shape[0]) * ~files_ids.mask
+    mask_com = (np.array(files_ids) < model_commits_als.item_factors.shape[0]) * ~files_ids.mask
 
-    #     emb_rev[np.arange(len(files_ids))[mask_rev]] = model_reviews_als.item_factors[files_ids[mask_rev]]
-    #     emb_com[np.arange(len(files_ids))[mask_com]] = model_commits_als.item_factors[files_ids[mask_com]]
-    try:
-        emb_rev = model_reviews_als.item_factors[files_ids[mask_rev]].copy()
-        emb_com = model_commits_als.item_factors[files_ids[mask_com]].copy()
-    except:
-        raise NameError('lol')
-
-    #     emb_rev, emb_com = model_reviews_als.item_factors[files_ids], model_commits_als.item_factors[files_ids]
+    emb_rev = model_reviews_als.item_factors[files_ids[mask_rev]].copy()
+    emb_com = model_commits_als.item_factors[files_ids[mask_com]].copy()
 
     cand = canrec.recommend((emb_rev, emb_com))
-    #     return cand
     ranrec = RankingRecommender((model_reviews_als.user_factors, model_commits_als.user_factors))
 
     return ranrec.recommend(cand, N=N)
-
-    #     print(files_ids)
 
 
 def recommend(x_df,
