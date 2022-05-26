@@ -2,39 +2,16 @@ import os
 
 import pandas as pd
 
-from mapping import *
-
-
-def get_reviewers(event, additional_data):
-    return additional_data['reviewer'][additional_data['reviewer'].pull_number == event.id].reviewer_login.to_list()
-
-
-def reshape(matrix, new_shape):
-    assert matrix.shape[0] <= new_shape[0]
-    assert matrix.shape[1] <= new_shape[1]
-
-    new_matrix = np.zeros(new_shape)
-    new_matrix[:matrix.shape[0], :matrix.shape[1]] = matrix
-
-    return new_matrix
-
-
-# def get_df(pr, space=False):
-#     dfs = {}
-#     if not space:
-#         for df in os.listdir(f'github_csv/csv/github/apache/{pr}/2020-01-10'):
-#             dfs[df.split('.')[0]] = pd.read_csv(f'github_csv/csv/github/apache/{pr}/2020-01-10/{df}', sep='|')
-#     else:
-#         for df in os.listdir(f'beam/csv/github/apache/{pr}/2020-01-10'):
-#             dfs[df.split('.')[0]] = pd.read_csv(f'beam/csv/github/apache/{pr}/2020-01-10/{df}', sep='|')
-#
-#     return dfs
+from recsys.mapping import *
 
 
 def get_df(path):
     dfs = {}
     for df in os.listdir(path):
-        dfs[df.split('.')[0]] = pd.read_csv(path + f'/{df}', sep='|')
+        try:
+            dfs[df.split('.')[0]] = pd.read_csv(path + f'/{df}', sep='|')
+        except:
+            continue
     return dfs
 
 
