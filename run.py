@@ -3,21 +3,20 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from estimator import train_als
-from recommender import recommend
-from utils import get_data, count_metrics
+from recsys.mapping import *
+from recsys.estimator import train_als
+from recsys.recommender import recommend
+from recsys.utils import get_data, count_metrics
 
 
-np.seterr(all='raise')
-
-path = '/Users/Farid.Bagirov/icsme2020/2020-01-10'
+path = 'zookeeper/2020-01-10'
 
 pulls, commits, mapping_user_rev, mapping_user_com, mapping_file_rev, mapping_file_com = get_data(path)
 
 from_date = commits.date.min()
 end_date = commits.date.max()
 
-to_date = timedelta(447, 0) + from_date
+to_date = timedelta(2700, 0) + from_date
 train_com = commits[(commits.date < to_date) & (commits.date >= from_date)]
 train_com = train_com.groupby(['file_path', 'author_login']).count().reset_index().rename(
     {'date': 'number', 'author_login': 'login'}, axis=1)
@@ -34,7 +33,7 @@ hyperparameters = {'transform': {'alpha': 30},
                            'regularization': 100},
                    'gamma': 0.999}
 
-for i in tqdm(range(10)):
+for i in tqdm(range(100)):
     test_date = to_date + timedelta(7, 0)
     test_rev = pulls[(pulls.date >= to_date) & (pulls.date < test_date)]
     test_rec = test_rev.groupby('number')[['file_path', 'reviewer_login']].agg(
@@ -42,20 +41,15 @@ for i in tqdm(range(10)):
 
     shape = (len(mapping_user_com.id2item), len(mapping_file_com.id2item))
 
-    #     print(1)
     model_commits_als, matcom = train_als(train_com)
-    #     print(2)
     model_reviews_als, matrev = train_als(train_rev)
-    #     model_commits_als = train_als(train_com, shape=shape)
-    #     print(3)
     mapping_user_com.set_mask(train_com, 'login')
     mapping_user_rev.set_mask(train_rev, 'login')
 
     mapping_file_com.set_mask(train_com, 'file_path')
     mapping_file_rev.set_mask(train_rev, 'file_path')
 
-    #     recommender = _build(model_reviews_als, mappings_reviews, model_commits_als, mappings_commits)
-    #     print(4)
+
     res_cur = recommend(test_rec,
                         model_reviews_als,
                         model_commits_als,

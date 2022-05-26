@@ -17,11 +17,11 @@ job("Prepare Docker image") {
 }
 
 
-job("Run zookeeper") {
+job("Run zookeeper test") {
     startOn {
         gitPush { enabled = false }
     }
-    container(image = "registry.jetbrains.team/p/rrr/rrr-python37/myimage:latest") {
+    container(image = "registry.jetbrains.team/p/rrr/rrrpython/py37:latest") {
         env["URL"] = "https://packages.jetbrains.team/pypi/p/rrr/rrrpythonindex/simple"
 
         shellScript {
