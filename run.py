@@ -31,7 +31,7 @@ hyperparameters = {'transform': {'alpha': 30},
                            'regularization': 100},
                    'gamma': 0.999}
 
-for i in range(10):
+for i in range(100):
     print(f"[{i}] - started test df construction")
     test_date = to_date + timedelta(7, 0)
     test_rev = pulls[(pulls.date >= to_date) & (pulls.date < test_date)]
@@ -40,7 +40,7 @@ for i in range(10):
 
     shape = (len(mapping_user_com.id2item), len(mapping_file_com.id2item))
 
-    print(f"[{i}] - started als traing")
+    # print(f"[{i}] - started als traing")
     model_commits_als, matcom = train_als(train_com)
     model_reviews_als, matrev = train_als(train_rev)
     mapping_user_com.set_mask(train_com, 'login')
@@ -49,7 +49,7 @@ for i in range(10):
     mapping_file_com.set_mask(train_com, 'file_path')
     mapping_file_rev.set_mask(train_rev, 'file_path')
 
-    print(f"[{i}] - started recommending")
+    # print(f"[{i}] - started recommending")
     res_cur = recommend(test_rec,
                         model_reviews_als,
                         model_commits_als,
@@ -63,7 +63,7 @@ for i in range(10):
     else:
         res = pd.concat([res, res_cur], axis=0)
 
-    print(f"[{i}] - started train construction")
+    # print(f"[{i}] - started train construction")
     train_com2 = commits[(commits.date >= to_date) & (commits.date < test_date)]
     train_com2 = train_com2.groupby(['file_path', 'author_login']).count().reset_index().rename(
         {'date': 'number', 'author_login': 'login'}, axis=1)
