@@ -10,41 +10,24 @@ job("Prepare Docker image") {
             labels["vendor"] = "jbr"
         }
 
-        push("registry.jetbrains.team/p/rrr/rrrpython/myimage") {
+        push("registry.jetbrains.team/p/rrr/rrrpython/py37") {
             tags("latest")
         }
     }
 }
 
 
-job("Run tests") {
+job("Run zookeeper") {
     startOn {
         gitPush { enabled = false }
     }
-    container(image = "registry.jetbrains.team/p/rrr/rrrpython/myimage:latest") {
+    container(image = "registry.jetbrains.team/p/rrr/rrr-python37/myimage:latest") {
         env["URL"] = "https://packages.jetbrains.team/pypi/p/rrr/rrrpythonindex/simple"
 
         shellScript {
             content = """
-                unzip beam.zip
+                unzip zookeeper.zip
                 python run.py
-            """
-        }
-    }
-}
-
-job("hyperparameters") {
-    startOn {
-        gitPush { enabled = false }
-    }
-    container(image = "registry.jetbrains.team/p/rrr/rrrpython/myimage:latest") {
-        env["URL"] = "https://packages.jetbrains.team/pypi/p/rrr/rrrpythonindex/simple"
-
-        shellScript {
-            content = """
-                unzip beam.zip
-                echo running hyper.py
-                python hyper.py
             """
         }
     }

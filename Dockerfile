@@ -1,5 +1,5 @@
 # We use Python 3 in our project
-FROM python:3
+FROM python:3.7
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
