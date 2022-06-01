@@ -53,6 +53,21 @@ def get_data(path):
     return pulls, commits, pull_user_mapping, commit_user_mapping, pull_file_mapping, commit_file_mapping
 
 
+def count_confidence(sample):
+    # for 0.95 confidence interval
+    p = np.mean(sample)
+    n = len(sample)
+    z = 1.96
+    if n * p > 10:
+        # De Moivre–Laplace theorem
+        d = z * np.sqrt(p * (1 - p) / len(sample))
+    else:
+        # Poisson Limit theorem
+        d = z * np.sqrt(p / n / n)
+
+    return d
+
+
 def count_metrics(res):
     res = res.copy()
 
@@ -61,7 +76,6 @@ def count_metrics(res):
         rr = [np.inf]
         for t in row['rev']:
             rr = min(rr, 1 + np.where(row['top-10'] == t)[0])
-        #     break
         rrs.append(1 / rr[0])
     res['rr'] = rrs
 
@@ -75,4 +89,9 @@ def count_metrics(res):
         res[f'top-{i}'] = res[f'top-{i}'] < res['rev']
 
     res.drop('rev', axis=1)
-    return res.mean()
+
+    res_dict = {'rr': res['rr'].mean()}
+
+    for i in [1, 3, 5, 10]:
+        res_dict[f'top-{i}'] = (res[f'top-{i}'].mean(), count_confidence(res[f'top-{i}'].to_numpy()))
+    return res_dict
