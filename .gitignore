@@ -1,10 +1,9 @@
 .ipynb_checkpoints
 .idea
-test.ipynb
+notebooks
 github_csv
 gerrit_csv
 github_raw
 apache_beam_2020-09-02
-newpipe.ipynb
 beam.zip
 zookeeper
