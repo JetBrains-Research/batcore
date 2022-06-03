@@ -1,11 +1,10 @@
 from datetime import timedelta
 
 import pandas as pd
-from tqdm import tqdm
 
 from recsys.estimator import train_als
 from recsys.recommender import recommend
-from recsys.utils import get_data, count_metrics
+from utils import get_data, count_metrics
 
 path = 'zookeeper/2020-01-10'
 
@@ -40,7 +39,6 @@ for i in range(100):
 
     shape = (len(mapping_user_com.id2item), len(mapping_file_com.id2item))
 
-    # print(f"[{i}] - started als traing")
     model_commits_als, matcom = train_als(train_com)
     model_reviews_als, matrev = train_als(train_rev)
     mapping_user_com.set_mask(train_com, 'login')
@@ -49,7 +47,6 @@ for i in range(100):
     mapping_file_com.set_mask(train_com, 'file_path')
     mapping_file_rev.set_mask(train_rev, 'file_path')
 
-    # print(f"[{i}] - started recommending")
     res_cur = recommend(test_rec,
                         model_reviews_als,
                         model_commits_als,
@@ -63,7 +60,6 @@ for i in range(100):
     else:
         res = pd.concat([res, res_cur], axis=0)
 
-    # print(f"[{i}] - started train construction")
     train_com2 = commits[(commits.date >= to_date) & (commits.date < test_date)]
     train_com2 = train_com2.groupby(['file_path', 'author_login']).count().reset_index().rename(
         {'date': 'number', 'author_login': 'login'}, axis=1)

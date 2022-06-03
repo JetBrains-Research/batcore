@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from recsys.utils import count_metrics
+from utils import count_metrics
 from .recommender import *
 
 
