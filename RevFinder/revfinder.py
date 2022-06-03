@@ -1,6 +1,8 @@
 from collections import defaultdict
 
-from RevFinder.utils import LCP
+import numpy as np
+
+from RevFinder.utils import *
 from env.recommender import RecommenderBase
 
 
@@ -23,21 +25,37 @@ class RevFinder(RecommenderBase):
             {'file_path': list, 'reviewer_login': lambda x: list(set(x)), 'date': lambda x: list(x)[0]}).reset_index()]
 
     def predict_single_review(self, file_path, n=10):
-        rev_scores = defaultdict(lambda: 0)
+        metrics = {'LCP': LCP,
+                   'LCSuff': LCSuff,
+                   'LCSubstr': LCSubstr,
+                   'LCSubseq': LCSubseq}
+        rev_scores = {metric: defaultdict(lambda: 0) for metric in metrics}
 
         for old_rev in self.history:
-            score = 0
+            score = {metric: 0 for metric in metrics}
             for f1 in old_rev.files:
                 for f2 in file_path:
-                    score += LCP(f1, f2)
+                    for metric in metrics:
+                        score[metric] += metrics[metric](f1, f2)
 
-            if score > 0:
-                score /= len(file_path) * len(old_rev.files)
-                for rev in old_rev.revs:
-                    rev_scores[rev] += score
+            for metric in metrics:
+                if score[metric] > 0:
+                    score[metric] /= len(file_path) * len(old_rev.files)
+                    for rev in old_rev.revs:
+                        rev_scores[metric][rev] += score[metric]
 
-        sorted_revs = [k for k, v in sorted(rev_scores.items(), key=lambda item: item[1])]
-        return sorted_revs[:n]
+        final_score = defaultdict(lambda: 0)
+        for metric in metrics:
+            sorted_revs = [k for k, v in sorted(rev_scores[metric].items(), key=lambda item: item[1])]
+            for i, rev in enumerate(sorted_revs):
+                final_score[rev] += len(sorted_revs) - i
+
+        final_sorted_revs = [k for k, v in sorted(final_score.items(), key=lambda item: item[1])]
+        # if len(final_sorted_revs) < n:
+        #     final_sorted_revs =  final_sorted_revs + [np.nan] * (n - len(final_sorted_revs))
+        if len(final_sorted_revs) == 0:
+            return [np.nan] * n
+        return final_sorted_revs[:n]
 
     def predict(self, data, n=10):
         preds = []
