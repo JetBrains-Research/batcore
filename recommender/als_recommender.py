@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from .recommender import RecommenderBase
+from recommender.recommender import RecommenderBase
 from recsys.estimator import train_als
 from recsys.mapping import MappingWithFallback, Mapping
 from recsys.recommender import _recommend
