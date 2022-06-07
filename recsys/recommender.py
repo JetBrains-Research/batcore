@@ -5,11 +5,75 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
+from Recommender.recommender import RecommenderBase
+from recsys.estimator import train_als
+
 _KWARG_FILTER_USERS = 'filter_users'
 _KWARG_N = 'N'
 _N_DEFAULT = 10
 _K = 25
 _MISSING_VALUE = -999
+
+
+class ALSRecommender(RecommenderBase):
+    def __init__(self):
+        super().__init__()
+        self.commit_file_mapping = None
+        self.pull_file_mapping = None
+        self.commit_user_mapping = None
+        self.pull_user_mapping = None
+
+        self.model_commits_als = None
+        self.model_reviews_als = None
+
+        self.pulls = None
+        self.commits = None
+
+    def set_mapping(self, dataset):
+        self.commit_file_mapping = dataset.commit_file_mapping
+        self.pull_file_mapping = dataset.pull_file_mapping
+        self.commit_user_mapping = dataset.commit_user_mapping
+        self.pull_user_mapping = dataset.pull_user_mapping
+
+    def predict(self, data, n=10):
+
+        y_pred = []
+
+        for i, (number, files, rev) in data.iterrows():
+            _y_pred = _recommend(self.model_reviews_als,
+                                 self.model_commits_als,
+                                 self.pull_user_mapping,
+                                 self.commit_user_mapping,
+                                 self.pull_file_mapping,
+                                 files,
+                                 n)
+
+            y_pred.append(_y_pred)
+
+        return y_pred
+
+    def fit(self, data):
+        pulls, commits = data
+
+        if self.pulls is None:
+            self.pulls = pulls
+        else:
+            self.pulls = pd.concat([self.pulls, pulls], axis=0).groupby(['file_path', 'login']).sum().reset_index()
+
+        if self.commits is None:
+            self.commits = commits
+        else:
+            self.commits = pd.concat([self.commits, commits], axis=0).groupby(
+                ['file_path', 'login']).sum().reset_index()
+
+        self.model_commits_als, _ = train_als(self.commits)
+        self.model_reviews_als, _ = train_als(self.pulls)
+
+        self.commit_user_mapping.set_mask(self.commits, 'login')
+        self.pull_user_mapping.set_mask(self.pulls, 'login')
+
+        self.commit_file_mapping.set_mask(self.commits, 'file_path')
+        self.pull_file_mapping.set_mask(self.pulls, 'file_path')
 
 
 class CandidateRecommender():

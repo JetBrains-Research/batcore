@@ -65,15 +65,27 @@ class RecSysDataset(GithubDataset):
         return self
 
     def __next__(self):
-        train = self.train
-        test = self.test
+
+        test = self.test.groupby('number')[['file_path', 'reviewer_login']].agg(
+            {'file_path': list, 'reviewer_login': lambda x: list(set(x))}).reset_index()
+
+        pulls = self.train[0].groupby(['file_path', 'reviewer_login', 'author_login']).count().reset_index().drop(
+            ['date', 'author_login'], axis=1).rename({'reviewer_login': 'login'}, axis=1)
+        commits = self.train[1].groupby(['file_path', 'author_login']).count().reset_index().rename(
+            {'date': 'number', 'author_login': 'login'}, axis=1)
+
+        train = (pulls, commits)
 
         if self.to_date > self.end_date:
             raise StopIteration
 
         self.train = (
             self.test, self.commits[(self.commits.date >= self.to_date) & (self.commits.date < self.test_date)])
+        self.train = (
+            self.test, self.commits[(self.commits.date >= self.to_date) & (self.commits.date < self.test_date)])
+
         self.to_date = self.test_date
         self.test_date = self.to_date + self.test_interval
+        self.test = self.pulls[(self.pulls.date >= self.to_date) & (self.pulls.date < self.test_date)]
 
         return train, test

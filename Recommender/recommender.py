@@ -27,7 +27,7 @@ class RecommenderBase(ABC):
     @abstractmethod
     def fit(self, data):
         """
-        trains recommender on given data
+        trains Recommender on given data
         :param data: train data to fit
         """
         pass
