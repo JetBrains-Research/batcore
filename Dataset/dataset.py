@@ -29,12 +29,10 @@ class DatasetBase(ABC):
         pass
 
 
-
-
 class GithubDataset:
     def __init__(self, path):
-        data = GithubDataset.get_df(path)
-        self.pulls, self.commits = self.prepare(data)
+        dfs = GithubDataset.get_df(path)
+        self.data = self.prepare(dfs)
 
     @staticmethod
     def get_df(path):

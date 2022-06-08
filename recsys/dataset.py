@@ -26,7 +26,6 @@ class RecSysDataset(DatasetBase):
             {'created_at': 'date'}, axis=1)
         commits = dataset.commits[['file_path', 'author_login', 'committed_date']].rename({'committed_date': 'date'},
                                                                                           axis=1)
-
         id2file = np.unique(np.hstack((pulls.file_path, commits.file_path)))
         id2user = np.unique(np.hstack((pulls.reviewer_login, pulls.author_login, commits.author_login)))
 
