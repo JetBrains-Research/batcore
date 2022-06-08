@@ -27,6 +27,9 @@ class Tester:
                     y_pred.append([*[cur_rec[i][:n] for n in top_ns], row.reviewer_login])
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev'])
                 recs.append(y_pred)
+            # if cnt > 150:
+            #     break
+            # # print(cnt)
 
         recs = pd.concat(recs, axis=0)
 

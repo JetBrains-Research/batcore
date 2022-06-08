@@ -1,37 +1,35 @@
 from collections import defaultdict
+from datetime import timedelta
 
 import numpy as np
 
 from RevFinder.utils import *
-from env.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase
 
 
 class Review:
-    def __init__(self, file_paths, reviewers):
+    def __init__(self, file_paths, reviewers, date):
         self.files = file_paths
         self.revs = reviewers
+        self.date = date
 
 
 class RevFinder(RecommenderBase):
-    def __init__(self):
+    def __init__(self, max_date=100):
         super(RevFinder, self).__init__()
         self.history = []
+        self.max_date = timedelta(max_date, 100)
 
-    def preprocess(self, data):
-        """
-        Retain only pull data and group same pulls together
-        """
-        return [data[0].groupby('number')[['file_path', 'reviewer_login', 'date']].agg(
-            {'file_path': list, 'reviewer_login': lambda x: list(set(x)), 'date': lambda x: list(x)[0]}).reset_index()]
-
-    def predict_single_review(self, file_path, n=10):
+    def predict_single_review(self, file_path, date, n=10):
         metrics = {'LCP': LCP,
                    'LCSuff': LCSuff,
                    'LCSubstr': LCSubstr,
                    'LCSubseq': LCSubseq}
         rev_scores = {metric: defaultdict(lambda: 0) for metric in metrics}
 
-        for old_rev in self.history:
+        for old_rev in reversed(self.history):
+            if (date - old_rev.date) > self.max_date:
+                break
             score = {metric: 0 for metric in metrics}
             for f1 in old_rev.files:
                 for f2 in file_path:
@@ -60,14 +58,12 @@ class RevFinder(RecommenderBase):
     def predict(self, data, n=10):
         preds = []
         for _, row in data.iterrows():
-            preds.append(self.predict_single_review(row.file_path, n))
+            preds.append(self.predict_single_review(row.file_path, row.date, n))
 
         return preds
 
     def fit(self, data):
-        data = data[0]
-        self.history = []
         for _, row in data.iterrows():
-            self.history.append(Review(row.file_path, row.reviewer_login))
+            self.history.append(Review(row.file_path, row.reviewer_login, row.date))
 
 

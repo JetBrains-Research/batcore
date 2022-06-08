@@ -22,6 +22,8 @@ class RecSysDataset(GithubDataset):
 
         super(RecSysDataset, self).__init__(path)
 
+        self.pulls, self.commits = self.data
+
     def prepare(self, data):
         pulls, commits = super().prepare(data)
 
