@@ -1,15 +1,11 @@
-from datetime import timedelta
-
 import numpy as np
 
-from Dataset.dataset import GithubDataset
+from Dataset.dataset import DatasetBase
 from recsys.mapping import MappingWithFallback, Mapping
 
 
-class RecSysDataset(GithubDataset):
-    def __init__(self, path):
-        self.initial_delta = None
-        self.test_interval = None
+class RecSysDataset(DatasetBase):
+    def __init__(self, dataset, initial_delta=None, test_interval=None):
 
         self.commit_file_mapping = None
         self.pull_file_mapping = None
@@ -20,12 +16,16 @@ class RecSysDataset(GithubDataset):
         self.start_date = None
         self.end_date = None
 
-        super(RecSysDataset, self).__init__(path)
+        super(RecSysDataset, self).__init__(dataset, initial_delta, test_interval)
 
         self.pulls, self.commits = self.data
 
-    def prepare(self, data):
-        pulls, commits = super().prepare(data)
+
+    def preprocess(self, dataset):
+        pulls = dataset.pulls[['file_path', 'number', 'reviewer_login', 'created_at', 'author_login']].rename(
+            {'created_at': 'date'}, axis=1)
+        commits = dataset.commits[['file_path', 'author_login', 'committed_date']].rename({'committed_date': 'date'},
+                                                                                          axis=1)
 
         id2file = np.unique(np.hstack((pulls.file_path, commits.file_path)))
         id2user = np.unique(np.hstack((pulls.reviewer_login, pulls.author_login, commits.author_login)))
@@ -52,10 +52,6 @@ class RecSysDataset(GithubDataset):
             self.end_date = d.date.max() if self.end_date is None else max(self.end_date, d.date.max())
 
         return pulls, commits
-
-    def set_params(self, initial_delta, test_interval):
-        self.initial_delta = timedelta(initial_delta, 0)
-        self.test_interval = timedelta(test_interval, 0)
 
     def __iter__(self):
         self.to_date = self.initial_delta + self.start_date
