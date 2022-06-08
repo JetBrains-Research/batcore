@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import numpy as np
 
-from data.dataset import GithubDataset
+from Dataset.dataset import GithubDataset
 from recsys.mapping import MappingWithFallback, Mapping
 
 

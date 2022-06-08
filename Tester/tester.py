@@ -28,7 +28,6 @@ class Tester:
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev'])
                 recs.append(y_pred)
 
-
         recs = pd.concat(recs, axis=0)
 
         return count_metrics(recs)

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-from Recommender.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase
 from recsys.estimator import train_als
 
 _KWARG_FILTER_USERS = 'filter_users'
@@ -76,7 +76,7 @@ class ALSRecommender(RecommenderBase):
         self.pull_file_mapping.set_mask(self.pulls, 'file_path')
 
 
-class CandidateRecommender():
+class CandidateRecommender:
     def __init__(self, users_factors: tuple, mappings_review, mappings_commits):
 
         self.users_factors_1, self.users_factors_2 = users_factors
@@ -185,7 +185,7 @@ class CandidateRecommender():
         return recommendations
 
 
-class RankingRecommender():
+class RankingRecommender:
     def __init__(self, profiles):
 
         self.profiles_1 = profiles[0]
