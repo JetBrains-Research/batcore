@@ -1,14 +1,23 @@
 from datetime import timedelta
 
-from Dataset.dataset import GithubDataset
+from Dataset.dataset import DatasetBase
 
 
-class RevFinderDataset(GithubDataset):
-    def __init__(self, path):
+class RevFinderDataset(DatasetBase):
+    def preprocess(self, dataset):
+        pulls = dataset.pulls[['file_path', 'number', 'reviewer_login', 'created_at', 'author_login']].rename(
+            {'created_at': 'date'}, axis=1)
+        pulls = pulls.groupby('number')[['file_path', 'reviewer_login', 'date']].agg(
+            {'file_path': list, 'reviewer_login': lambda x: list(set(x)), 'date': lambda x: list(x)[0]}).reset_index()
+
+        self.start_date = pulls.date.min()
+        self.end_date = pulls.date.max()
+        return pulls
+
+    def __init__(self, dataset, initial_delta=None, test_interval=None):
         self.start_date = None
         self.end_date = None
-        super(RevFinderDataset, self).__init__(path)
-
+        super(RevFinderDataset, self).__init__(dataset, initial_delta, test_interval)
 
         self.pulls = self.data
 
@@ -38,12 +47,3 @@ class RevFinderDataset(GithubDataset):
             raise StopIteration
 
         return train, test
-
-    def prepare(self, data):
-        data = super(RevFinderDataset, self).prepare(data)
-        pulls = data[0].groupby('number')[['file_path', 'reviewer_login', 'date']].agg(
-            {'file_path': list, 'reviewer_login': lambda x: list(set(x)), 'date': lambda x: list(x)[0]}).reset_index()
-
-        self.start_date = pulls.date.min()
-        self.end_date = pulls.date.max()
-        return pulls

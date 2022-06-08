@@ -29,7 +29,7 @@ class Tester:
                 recs.append(y_pred)
             # if cnt > 150:
             #     break
-            # # print(cnt)
+            print(cnt)
 
         recs = pd.concat(recs, axis=0)
 
