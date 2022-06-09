@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 
 from RecommenderBase.recommender import RecommenderBase
@@ -34,16 +36,19 @@ class TextMiningRecommender(RecommenderBase):
             probs = probs * counts
             probs = probs.sum(axis=-1)
             probs += np.log(self.prob[self.cur_rev] + 1e-8) - len(row.body) * np.log(self.den[self.cur_rev] + 1e-8)
-        best = np.argsort(probs)[:10]
 
-        return best
+        return defaultdict(lambda: 0, {self.id2rev[self.new_ids[i]]: np.exp(probs[i]) for i in range(len(probs))})
+
+    def set_new_ids(self):
+        self.new_ids = np.arange(len(self.cur_rev))[self.cur_rev]
 
     def predict(self, data, n=10):
-        new_ids = np.arange(len(self.cur_rev))[self.cur_rev]
+        self.set_new_ids()
         res = []
+
         for i, row in data.iterrows():
             best = self.predict_single_review(row)
-            best = new_ids[best][: n]
+            best = self.new_ids[best][: n]
             best = [self.id2rev[i] for i in best]
             res.append(best)
 

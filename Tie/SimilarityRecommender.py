@@ -14,7 +14,9 @@ class SimilarityRecommender(RecommenderBase):
         self.history = []
         self.max_date = timedelta(max_date, 100)
 
-    def predict_single_review(self, file_path, date, n=10):
+    def predict_single_review(self, row, n=None):
+        file_path = row.file_path
+        date = row.date
         rev_scores = defaultdict(lambda: 0)
 
         for old_rev in reversed(self.history):
@@ -30,6 +32,8 @@ class SimilarityRecommender(RecommenderBase):
                 for rev in old_rev.revs:
                     rev_scores[rev] += score
 
+        if n is None:
+            return rev_scores
         final_sorted = [k for k, v in sorted(rev_scores.items(), key=lambda item: item[1])]
 
         if len(final_sorted) == 0:
@@ -39,7 +43,7 @@ class SimilarityRecommender(RecommenderBase):
     def predict(self, data, n=10):
         preds = []
         for _, row in data.iterrows():
-            preds.append(self.predict_single_review(row.file_path, row.date, n))
+            preds.append(self.predict_single_review(row, n))
 
         return preds
 
