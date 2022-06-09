@@ -3,7 +3,7 @@ import numpy as np
 from RecommenderBase.recommender import RecommenderBase
 
 
-class TextRecommender(RecommenderBase):
+class TextMiningRecommender(RecommenderBase):
     def __init__(self, dataset):
         super().__init__()
 
