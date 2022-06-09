@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from Dataset.dataset import DatasetBase
 
 
@@ -7,7 +5,7 @@ class RevFinderDataset(DatasetBase):
     def preprocess(self, dataset):
         pulls = dataset.pulls[['file_path', 'number', 'reviewer_login', 'created_at', 'author_login']].rename(
             {'created_at': 'date'}, axis=1)
-        pulls = pulls.groupby('number')[['file_path', 'reviewer_login', 'date']].agg(
+        pulls = pulls.groupby('number')[['file_path', 'reviewer_login', 'date', 'author_login']].agg(
             {'file_path': list, 'reviewer_login': lambda x: list(set(x)), 'date': lambda x: list(x)[0]}).reset_index()
 
         self.start_date = pulls.date.min()
@@ -20,10 +18,6 @@ class RevFinderDataset(DatasetBase):
         super(RevFinderDataset, self).__init__(dataset, initial_delta, test_interval)
 
         self.pulls = self.data
-
-    def set_params(self, initial_delta, test_interval):
-        self.initial_delta = timedelta(initial_delta, 0)
-        self.test_interval = timedelta(test_interval, 0)
 
     def __iter__(self):
         self.to_date = self.initial_delta + self.start_date
