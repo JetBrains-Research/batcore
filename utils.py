@@ -36,7 +36,7 @@ def count_metrics(res):
     for _, row in res.iterrows():
         rr = [np.inf]
         for t in row['rev']:
-            rr = min(rr, 1 + np.where(row['top-10'] == t)[0])
+            rr = min(rr, 1 + np.where(np.array(row['top-10']) == t)[0])
         rrs.append(1 / rr[0])
     res['rr'] = rrs
 
