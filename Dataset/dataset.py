@@ -32,7 +32,7 @@ class DatasetBase(ABC):
 class GithubDataset:
     def __init__(self, path):
         data = GithubDataset.get_df(path)
-        self.pulls, self.commits = self.prepare(data)
+        self.pulls, self.commits = GithubDataset.prepare(data)
 
     @staticmethod
     def get_df(path):
@@ -45,7 +45,8 @@ class GithubDataset:
                 continue
         return dfs
 
-    def prepare(self, data):
+    @staticmethod
+    def prepare(data):
         pulls = data['pull_file'].merge(data['reviewer']).merge(data['pull'],
                                                                 left_on='pull_number',
                                                                 right_on='number').merge(data['pull_author'])
