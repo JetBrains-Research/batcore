@@ -1,5 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
+import multiprocessing as mp
+from itertools import product
 
 import numpy as np
 
@@ -14,6 +16,8 @@ class SimilarityRecommender(RecommenderBase):
         self.history = []
         self.max_date = timedelta(max_date, 100)
 
+        self.pools = mp.Pool(10)
+
     def predict_single_review(self, row, n=None):
         file_path = row.file_path
         date = row.date
@@ -22,10 +26,13 @@ class SimilarityRecommender(RecommenderBase):
         for old_rev in reversed(self.history):
             if (date - old_rev.date) > self.max_date:
                 break
-            score = 0
-            for f1 in old_rev.files:
-                for f2 in file_path:
-                    score += revsim(f1, f2)
+            score = [revsim(f1, f1) for (f1, f2) in product(old_rev.files, file_path)]
+            # score = self.pools.starmap(revsim, product(old_rev.files, file_path))
+            score = sum(score)
+
+            # for f1 in old_rev.files:
+            #     for f2 in file_path:
+            #         score += revsim(f1, f2)
 
             if score > 0:
                 score /= len(file_path) * len(old_rev.files)
@@ -34,7 +41,7 @@ class SimilarityRecommender(RecommenderBase):
 
         if n is None:
             return rev_scores
-        final_sorted = [k for k, v in sorted(rev_scores.items(), key=lambda item: item[1])]
+        final_sorted = [k for k, v in sorted(rev_scores.items(), key=lambda item: -item[1])]
 
         if len(final_sorted) == 0:
             return [np.nan] * n
