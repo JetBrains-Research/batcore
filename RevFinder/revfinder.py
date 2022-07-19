@@ -1,99 +1,83 @@
-import multiprocessing as mp
-from collections import defaultdict
-from datetime import timedelta
-from itertools import product
+from datetime import datetime, timedelta
 
-# import billiard as mp
 import numpy as np
 
-from RecommenderBase.recommender import RecommenderBase
-from RevFinder.utils import *
+from RevFinder.utils import LCSubseq, LCSubstr, LCSuff, LCP
+from Tie.utils import get_map
 
 
-class Review:
-    def __init__(self, file_paths, reviewers, date):
-        self.files = file_paths
-        self.revs = reviewers
-        self.date = date
-
-
-class ArgIterator:
-    def __init__(self, iterator, *args):
-        self.it = iterator
-        self.args = args
-        self.iter_it = None
-
-    def __iter__(self):
-        self.iter_it = iter(self.it)
-        return self
-
-    def __next__(self):
-        res = next(self.iter_it)
-        return res, self.args
-
-
-class RevFinder(RecommenderBase):
-    def __init__(self, dataset, max_date=100):
-        super(RevFinder, self).__init__()
+class RevFinder:
+    def __init__(self, reviewer_list, max_date=100):
         self.history = []
-        self.max_date = timedelta(max_date, 100)
+        self.max_date = max_date
 
-        self.log = defaultdict(lambda: [])
+        self.reviewer_list = reviewer_list
+        self.rev_count = len(reviewer_list)
+        self.reviewer_map = get_map(reviewer_list)
 
-        self.hash = -np.ones((4, len(dataset.id2file), len(dataset.id2file)))
-        self.cnt = defaultdict(lambda: 0)
+        self._similarity_cache = [{} for _ in range(4)]
 
-        self.file2id = dataset.file2id
-        self.id2file = dataset.id2file
+    def predict(self, review, n=10):
+        metrics = [LCP, LCSuff, LCSubstr, LCSubseq]
 
-        self.pools = mp.Pool(10)
+        review = self._transform_review_format(review)
 
-    def predict_single_review(self, file_path, date, n=10):
-        metrics = {
-            'LCP': LCP,
-            'LCSuff': LCSuff,
-            'LCSubstr': LCSubstr,
-            'LCSubseq': LCSubseq
-        }
-        rev_scores = [defaultdict(lambda: 0) for metric in metrics]
+        rev_scores = [np.zeros(self.rev_count) for _ in metrics]
 
-        for metric_id, metric in enumerate(metrics):
+        end_time = review["date"]
+        start_time = (datetime.fromtimestamp(end_time) - timedelta(days=self.max_date)).timestamp()
 
-            for old_rev in reversed(self.history):
-                if (date - old_rev.date) > self.max_date:
-                    break
-                # results = [metrics[metric]((f1, f2)) for (f1, f2) in product(old_rev.files, file_path)]
-                results = self.pools.map(metrics[metric], product(old_rev.files, file_path))
-                score = sum(results)
+        cf1 = review["file_path"][:500]
+
+        order_score = np.zeros(self.rev_count)
+
+        for old_rev in reversed(self.history):
+            if old_rev['date'] == end_time:
+                continue
+            if old_rev['date'] < start_time:
+                break
+
+            cf2 = old_rev["file_path"][:500]
+
+            for metric_id, metric in enumerate(metrics):
+                score = 0
+                for f1 in cf1:
+                    for f2 in cf2:
+                        score += metric(f1, f2)
                 if score > 0:
-                    score /= len(file_path) * len(old_rev.files)
-                for rev in old_rev.revs:
+                    score /= len(cf1) * len(cf2)
+
+                for rev in old_rev['reviewer_login']:
                     rev_scores[metric_id][rev] += score
+                # for f1 in cf1:
+                #     s1 = set(f1)
+                #     for f2 in cf2:
+                #         s2 = set(f2)
+                #         score += (len(s1 & s2)) / max(len(s1), len(s2))
+                # score = score / (len(cf1) * len(cf2) + 1)
+                #
+                # for rev in old_rev['reviewer_login']:
+                #     rev_scores[metric_id][rev] += score
 
-        final_score = defaultdict(lambda: 0)
+        final_score = np.zeros(self.rev_count)
         for (metric_id, metric) in enumerate(metrics):
-            sorted_revs = [k for k, v in sorted(rev_scores[metric_id].items(), key=lambda item: item[1])]
-            for i, rev in enumerate(sorted_revs):
-                final_score[rev] += len(sorted_revs) - i
+            t = np.sum(rev_scores[metric_id] != 0)
+            order_score[np.argsort(rev_scores[metric_id])] = np.arange(self.rev_count)
+            final_score += np.maximum(order_score - np.sum(rev_scores[metric_id] == 0) + 1, 0)
+        final_sorted_revs = np.argsort(final_score)
+        # final_sorted_revs = np.argsort(rev_scores[0])
+        # scores = rev_scores[0][final_sorted_revs[-n:]]
 
-        final_sorted_revs = [k for k, v in sorted(final_score.items(), key=lambda item: item[1])]
+        return [self.reviewer_list[x] for x in final_sorted_revs[-n:][::-1]]
 
-        if len(final_sorted_revs) == 0:
-            return [np.nan] * n
-        return final_sorted_revs[:n]
+    def fit(self, review):
+        self.history.append(self._transform_review_format(review))
 
-    def predict(self, data, n=10):
-        preds = []
-        for _, row in data.iterrows():
-            preds.append(self.predict_single_review(row.file_path, row.date, n))
-        return preds
-
-    def start_pool(self):
-        self.pools = mp.Pool(10)
-
-    def stop_pool(self):
-        self.pools.close()
-
-    def fit(self, data):
-        for _, row in data.iterrows():
-            self.history.append(Review(row.file_path, row.reviewer_login, row.date))
+    def _transform_review_format(self, review):
+        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in review["reviewer_login"]]
+        return {
+            "reviewer_login": np.array(reviewer_indices),
+            "id": review["number"],
+            "date": review["date"].timestamp(),
+            "file_path": [f.split('/') for f in review["file_path"]]
+        }

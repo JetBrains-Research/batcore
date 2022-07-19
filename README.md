@@ -6,9 +6,9 @@
 
 Download links:
 
-SSH clone URL: ssh://git@git.jetbrains.team/rrr/rrr.git
+SSH clone URL: ssh://git@git.jetbrains.team/rrr/framework.git
 
-HTTPS clone URL: https://git.jetbrains.team/rrr/rrr.git
+HTTPS clone URL: https://git.jetbrains.team/rrr/framework.git
 
 
 

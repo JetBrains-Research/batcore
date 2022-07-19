@@ -1,31 +1,16 @@
 import os
 from abc import ABC, abstractmethod
-from datetime import timedelta
 
 import pandas as pd
 
 
 # TODO add comments
 class DatasetBase(ABC):
-    def __init__(self, dataset, initial_delta=None, test_interval=None):
+    def __init__(self, dataset):
         self.data = self.preprocess(dataset)
-        self.initial_delta = timedelta(initial_delta, 0)
-        self.test_interval = timedelta(test_interval, 0)
-
-    def set_params(self, initial_delta, test_interval):
-        self.initial_delta = timedelta(initial_delta, 0)
-        self.test_interval = timedelta(test_interval, 0)
 
     @abstractmethod
     def preprocess(self, dataset):
-        pass
-
-    @abstractmethod
-    def __iter__(self):
-        pass
-
-    @abstractmethod
-    def __next__(self):
         pass
 
 
@@ -65,3 +50,47 @@ class GithubDataset:
         commits = commits.drop(['oid', 'file_oid'], axis=1)
 
         return pulls, commits
+
+
+class GerritDataset:
+    def __init__(self, path):
+        data = GerritDataset.get_df(path)
+        self.pulls = GerritDataset.prepare(data)
+
+    @staticmethod
+    def get_df(path):
+        pulls = {}
+        for d in ['changes', 'changes_files', 'changes_reviewers']:
+            data = []
+            for root, subdirs, files in os.walk(path + f'/{d}'):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if file.endswith('.csv'):
+                        data.append(pd.read_csv(file_path, sep='|'))
+            pulls[d] = pd.concat(data, axis=0).reset_index()
+
+        return pulls
+
+    @staticmethod
+    def prepare(data):
+        pulls = data
+
+        pulls['changes_reviewers'] = pulls['changes_reviewers'].drop_duplicates()
+        pulls['changes_files'] = pulls['changes_files'].drop_duplicates()
+        pulls['changes'] = pulls['changes'].drop_duplicates()
+
+        pulls_df = pulls['changes'].merge(pulls['changes_files'], left_on='key', right_on='key_change',
+                                          how='inner').merge(pulls['changes_reviewers'], left_on='key',
+                                                             right_on='key_change', how='inner')
+
+        pulls_df = pulls_df.drop(
+            ['index_x', 'project', 'change_id', 'number', 'index_y', 'key_change_x', 'key_change_y', 'index', ], axis=1)
+
+        pulls_df['updated_at'] = pd.to_datetime(pulls_df.updated_at).dt.tz_localize(None)
+        pulls_df['created_at'] = pd.to_datetime(pulls_df.created_at).dt.tz_localize(None)
+
+        pulls_df['key_file'] = pulls_df['key_file'].apply(lambda x: x.replace(':', '/'))
+        pulls_df = pulls_df.rename(
+            {'key_file': 'file_path', 'subject': 'body', 'key_user': 'reviewer_login', 'key': 'number'}, axis=1)
+
+        return pulls_df
