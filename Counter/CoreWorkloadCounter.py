@@ -1,10 +1,11 @@
 from collections import defaultdict
 
-from CounterBase import CounterBase
+from Counter.CounterBase import CounterBase
 
 
 class CoreWorkloadCounter(CounterBase):
-    def count(self, history, from_date=None, to_date=None):
+    @classmethod
+    def count(cls, history, from_date=None, to_date=None):
         if from_date is None:
             from_date = history[0]['date']
         if to_date is None:
@@ -18,7 +19,7 @@ class CoreWorkloadCounter(CounterBase):
                 break
 
             for reviewer in review['reviewer_login']:
-                review_count[review] += 1
+                review_count[reviewer] += 1
 
         sorted_counts = sorted(review_count.values(), key=lambda x: -x)
         core_workload = sum(sorted_counts[:10])
