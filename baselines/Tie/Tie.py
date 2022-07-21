@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 
 from RecommenderBase.recommender import RecommenderBase
-from Tie.utils import get_map
+from baselines.Tie.utils import get_map
 
 
 class Tie(RecommenderBase):

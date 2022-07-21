@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 import numpy as np
 
-from RevFinder.utils import LCSubseq, LCSubstr, LCSuff, LCP
-from Tie.utils import get_map
+from baselines.RevFinder.utils import LCSubseq, LCSubstr, LCSuff, LCP
+from baselines.Tie.utils import get_map
 
 
 class RevFinder:
