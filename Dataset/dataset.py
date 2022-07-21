@@ -137,6 +137,8 @@ class GerritDataset:
             {'key_file': 'file_path', 'subject': 'body', 'key_user': 'reviewer_login', 'key': 'number'}, axis=1)
 
         pulls['comment'] = pulls.comment.apply(lambda x: x.split('Reviewed-on')[0])
+
+        pulls = pulls[pulls.reviewer_login != 'Jenkins:']
         # commits part
 
         commits = data['commits'].merge(data['commits_file'],
