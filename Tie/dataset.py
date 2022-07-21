@@ -1,3 +1,5 @@
+import numpy as np
+
 from Dataset.dataset import DatasetBase
 
 
@@ -7,9 +9,13 @@ class DS:
 
 
 class TieDataset(DatasetBase):
-    def __init__(self, dataset):
+    def __init__(self, dataset, max_file=np.inf):
+        """
+        :param max_file: maximum number of files that a review can have
+        """
         self.start_date = None
         self.end_date = None
+        self.max_file = max_file
         super().__init__(dataset)
 
     def preprocess(self, dataset):
@@ -21,6 +27,7 @@ class TieDataset(DatasetBase):
             {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
              'date': lambda x: list(x)[0], 'body': lambda x: list(x)[0]}).reset_index()
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
+        pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
 
         pulls = pulls.sort_values('date')
 
@@ -31,17 +38,3 @@ class TieDataset(DatasetBase):
 
     def get_revname(self):
         return 'reviewer_login'
-
-# class TieDataset(DatasetBase):
-#     def __init__(self, dataset):
-#         super().__init__(dataset)
-#         self.pulls = self.data
-#
-#     def preprocess(self, dataset):
-#         pulls = dataset.pulls.rename({'created_at': 'date'}, axis=1)
-#
-#         pulls = pulls.sort_values('date')
-#         return pulls
-#
-#     def get_revname(self):
-#         return 'reviewer_login'
