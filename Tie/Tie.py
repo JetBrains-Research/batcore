@@ -1,11 +1,20 @@
+# based on https://github.com/dezhen-k/icsme2015-paper-impl
+
 from datetime import datetime, timedelta
 
 from RecommenderBase.recommender import RecommenderBase
-from Tie2.utils import get_map
+from Tie.utils import get_map
 
 
 class Tie(RecommenderBase):
-    def __init__(self, word_list, reviewer_list, text_splitter=lambda x: x.split(' '), alpha=0.7, M=100):
+    def __init__(self, word_list, reviewer_list, text_splitter=lambda x: x.split(' '), alpha=0.7, max_date=100):
+        """
+        :param word_list: word dictionary for pulls comments
+        :param reviewer_list: list of all reviewers
+        :param text_splitter: a function to parse pull comments
+        :param alpha: weight between path-based and text-based recommenders
+        :param max_date: time in days after which reviews are not considered
+        """
         super().__init__()
         self.reviews = []
         self.word_list = word_list
@@ -19,7 +28,7 @@ class Tie(RecommenderBase):
         self._similarity_cache = {}
         self.text_splitter = text_splitter
 
-        self.M = M
+        self.max_date = max_date
         self.alpha = alpha
 
     def predict(self, review, n=10):
@@ -54,7 +63,7 @@ class Tie(RecommenderBase):
                 map(lambda x: x[0], L)
                 )
         )
-        return L[:n], scores
+        return L[:n]
 
     def fit(self, review):
         """Updates the state of the model with an input review."""
@@ -76,7 +85,7 @@ class Tie(RecommenderBase):
 
         s = 0
         end_time = review["date"]
-        start_time = (datetime.fromtimestamp(end_time) - timedelta(days=self.M)).timestamp()
+        start_time = (datetime.fromtimestamp(end_time) - timedelta(days=self.max_date)).timestamp()
         for old_rev in reversed(self.reviews):
             if old_rev["date"] == end_time:
                 continue

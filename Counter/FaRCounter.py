@@ -3,7 +3,11 @@ from collections import defaultdict
 from Counter.CounterBase import CounterBase
 
 
+# TODO add commits
 class FaRCounter(CounterBase):
+    """
+    Files at Risk metric. Calculates number of files in a time frame that are known to at most one active contributer
+    """
     @classmethod
     def count(cls, history, from_date=None, to_date=None):
         if from_date is None:

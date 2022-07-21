@@ -4,6 +4,9 @@ from Counter.CounterBase import CounterBase
 
 
 class ExpertiseCounter(CounterBase):
+    """
+    Expertise metric. Calculates percentage of files in a review known to the reviewers
+    """
     @classmethod
     def count(cls, history, from_date=None, to_date=None):
         if from_date is None:

@@ -49,15 +49,6 @@ class RevFinder:
 
                 for rev in old_rev['reviewer_login']:
                     rev_scores[metric_id][rev] += score
-                # for f1 in cf1:
-                #     s1 = set(f1)
-                #     for f2 in cf2:
-                #         s2 = set(f2)
-                #         score += (len(s1 & s2)) / max(len(s1), len(s2))
-                # score = score / (len(cf1) * len(cf2) + 1)
-                #
-                # for rev in old_rev['reviewer_login']:
-                #     rev_scores[metric_id][rev] += score
 
         final_score = np.zeros(self.rev_count)
         for (metric_id, metric) in enumerate(metrics):
@@ -65,8 +56,6 @@ class RevFinder:
             order_score[np.argsort(rev_scores[metric_id])] = np.arange(self.rev_count)
             final_score += np.maximum(order_score - np.sum(rev_scores[metric_id] == 0) + 1, 0)
         final_sorted_revs = np.argsort(final_score)
-        # final_sorted_revs = np.argsort(rev_scores[0])
-        # scores = rev_scores[0][final_sorted_revs[-n:]]
 
         return [self.reviewer_list[x] for x in final_sorted_revs[-n:][::-1]]
 

@@ -4,6 +4,9 @@ from Counter.CounterBase import CounterBase
 
 
 class CoreWorkloadCounter(CounterBase):
+    """
+    Calculates number of reviews for the reviewers with the most reviews
+    """
     @classmethod
     def count(cls, history, from_date=None, to_date=None):
         if from_date is None:

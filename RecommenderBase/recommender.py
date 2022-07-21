@@ -5,15 +5,6 @@ class RecommenderBase(ABC):
     def __init__(self):
         pass
 
-    def preprocess(self, data):
-        """
-        preprocess Dataset for the model if necessary. Should return any iterable object of dataframes used during
-        training. By default returns Dataset as is
-        :param data: Dataset on which the model will be tested
-        :return: preprocessed Dataset
-        """
-        return data
-
     @abstractmethod
     def predict(self, data, n=10):
         """
