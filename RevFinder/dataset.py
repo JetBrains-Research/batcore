@@ -24,3 +24,6 @@ class RevFinderDataset(DatasetBase):
 
     def replace(self, data, cur_rec):
         pass
+
+    def get_revname(self):
+        return 'reviewer_login'
