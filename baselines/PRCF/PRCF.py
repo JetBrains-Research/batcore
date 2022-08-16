@@ -57,7 +57,6 @@ class PRCF(RecommenderBase):
                     score += self.implicit_eval(i, j)
             scores[user] = score
 
-
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
 
         return sorted_users[:n]
@@ -84,7 +83,7 @@ class PRCF(RecommenderBase):
 
         self.end_time = data[-1]['date']
 
-        if len(self.history) % self.freq == 1:
+        if (len(self.history) - 1) % self.freq == 0:
             self.train_emb()
 
     def transform(self, pull):
@@ -104,9 +103,10 @@ class PRCF(RecommenderBase):
         rd_ij = self.get_r(i, j, cols)
         mat_hat = (self.q[i] * self.p[i]).sum()
         neighborhood_score = 0
+        den = (self.end_time - self.begin_time).seconds
         if len(rd_ij) != 0:
             for h in rd_ij:
-                neighborhood_score += (self.mat[i, j] - mat_hat) * self.w[j, h]
+                neighborhood_score += (self.mat[i, j] / den - mat_hat) * self.w[j, h]
             neighborhood_score /= np.sqrt(len(rd_ij))
         mat_hat += neighborhood_score
         return mat_hat
@@ -131,33 +131,32 @@ class PRCF(RecommenderBase):
 
     def train_emb(self):
         cols = np.unique(self.mat.nonzero()[1])
-
+        den = (self.end_time - self.begin_time).seconds
         for (i, j) in zip(*self.mat.nonzero()):
             rd_ij = self.get_r(i, j, cols)
             mat_hat = (self.q[i] * self.p[i]).sum()
             neighborhood_score = 0
             if len(rd_ij) != 0:
                 for h in rd_ij:
-                    neighborhood_score += (self.mat[i, j] - mat_hat) * self.w[j, h]
+                    neighborhood_score += (self.mat[i, j] / den - mat_hat) * self.w[j, h]
                 neighborhood_score /= np.sqrt(len(rd_ij))
             mat_hat += neighborhood_score
 
-            delta_pi = -2 * (self.mat[i, j] - mat_hat) * self.q[j] + 2 * self.lambd2 * self.p[i]
-            delta_qj = -2 * (self.mat[i, j] - mat_hat) * self.p[i] + 2 * self.lambd2 * self.q[i]
+            delta_pi = -2 * (self.mat[i, j] / den - mat_hat) * self.q[j] + 2 * self.lambd2 * self.p[i]
+            delta_qj = -2 * (self.mat[i, j] / den - mat_hat) * self.p[i] + 2 * self.lambd2 * self.q[i]
 
             if len(rd_ij) != 0:
                 t1 = (self.q[rd_ij] * self.w[j, rd_ij].reshape(-1, 1)).sum(axis=0)
-                delta_pi += 2 * (self.mat[i, j] - mat_hat) * t1 / np.sqrt(len(rd_ij))
+                delta_pi += 2 * (self.mat[i, j] / den - mat_hat) * t1 / np.sqrt(len(rd_ij))
 
                 t2 = (self.w[j, rd_ij].reshape(-1, 1) * self.p[i])
-                delta_qh = 2 * (self.mat[i, j] - mat_hat) / np.sqrt(len(rd_ij)) * t2
+                delta_qh = 2 * (self.mat[i, j] / den - mat_hat) / np.sqrt(len(rd_ij)) * t2
 
-                t3 = self.mat[i, rd_ij].toarray() - self.q[rd_ij] @ self.q[i]
-                delta_wij = -2 * (self.mat[i, j] - mat_hat) * t3 / np.sqrt(len(rd_ij)) + 2 * self.w[j, rd_ij]
+                t3 = self.mat[i, rd_ij].toarray() / den - self.q[rd_ij] @ self.q[i]
+                delta_wij = -2 * (self.mat[i, j] / den - mat_hat) * t3 / np.sqrt(len(rd_ij)) + 2 * self.w[j, rd_ij]
 
                 self.w[j, rd_ij] -= self.lr * delta_wij
                 self.q[rd_ij] -= self.lr * delta_qh
 
             self.p[i] -= self.lr * delta_pi
             self.q[j] -= self.lr * delta_qj
-
