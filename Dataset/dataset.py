@@ -86,9 +86,18 @@ class GerritDataset:
        download script and outputs in a comfortable format
        """
 
-    def __init__(self, path):
+    def __init__(self, path, from_checkpoint=False):
+        if from_checkpoint:
+            self.pulls = pd.read_csv(path + '/pulls.csv')
+            self.pulls.created_at = pd.to_datetime(self.pulls.created_at).dt.tz_localize(None)
+            self.commits = pd.read_csv(path + '/commits.csv')
+            self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
+            self.comments = pd.read_csv(path + '/comments.csv')
+            self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
+
+            return
         data = GerritDataset.get_df(path)
-        self.pulls, self.commits = GerritDataset.prepare(data)
+        self.pulls, self.commits, self.comments = GerritDataset.prepare(data)
 
     @staticmethod
     def get_df(path):
@@ -97,13 +106,15 @@ class GerritDataset:
         :return: dictionary with all dataframes for pulls and commits
         """
         data = {}
-        for d in ['changes', 'changes_files', 'changes_reviewer', 'commits', 'commits_file', 'commits_author']:
+        for d in ['changes', 'changes_files', 'changes_reviewer', 'commits', 'commits_file', 'commits_author',
+                  'comments_file', 'comments_patch']:
             cur_data = []
             for root, subdirs, files in os.walk(path + f'/{d}'):
                 for file in files:
                     file_path = os.path.join(root, file)
                     if file.endswith('.csv'):
-                        cur_data.append(pd.read_csv(file_path, sep='|'))
+                        cur_data.append(
+                            pd.read_csv(file_path, sep='|', on_bad_lines='skip'))  # todo remove on bad lines
             data[d] = pd.concat(cur_data, axis=0).reset_index()
 
         return data
@@ -134,21 +145,39 @@ class GerritDataset:
 
         pulls['key_file'] = pulls['key_file'].apply(lambda x: x.replace(':', '/'))
         pulls = pulls.rename(
-            {'key_file': 'file_path', 'subject': 'body', 'key_user': 'reviewer_login', 'key': 'number'}, axis=1)
+            {'key_file': 'file_path', 'subject': 'body', 'key_user_y': 'reviewer_login', 'key': 'number',
+             'key_user_x': 'owner'}, axis=1)
 
+        pulls.comment = pulls.comment.fillna('')
         pulls['comment'] = pulls.comment.apply(lambda x: x.split('Reviewed-on')[0])
 
         pulls = pulls[pulls.reviewer_login != 'Jenkins:']
         # commits part
 
         commits = data['commits'].merge(data['commits_file'],
-                                        left_on='key',
+                                        left_on='key_commit',
                                         right_on='key_commit').merge(data['commits_author'],
-                                                                     left_on='key',
+                                                                     left_on='key_commit',
                                                                      right_on='key_commit')
 
         commits['date'] = pd.to_datetime(commits.committed_date).dt.tz_localize(None)
-        commits = commits.drop(
-            ['oid', 'index_x', 'key', 'index_y', 'key_commit_x', 'index', 'key_commit_y', 'committed_date'], axis=1)
 
-        return pulls, commits
+        commits = commits.drop(
+            ['oid', 'index_x', 'index_y', 'index', 'committed_date', 'lines_inserted', 'lines_deleted', 'size',
+             'size_delta'], axis=1)
+        commits['key_file'] = commits['key_file'].apply(lambda x: x.replace(':', '/'))
+
+        # comments part
+        comments_file = data['comments_file']
+        comments_file.time = pd.to_datetime(comments_file.time).dt.tz_localize(None)
+        comments_file = comments_file.drop(['index'], axis=1).rename({'time': 'date'}, axis=1)
+        comments_file['key_file'] = comments_file['key_file'].apply(lambda x: x.replace(':', '/'))
+
+        comments_pull = data['comments_patch']
+        comments_pull.time = pd.to_datetime(comments_pull.time).dt.tz_localize(None)
+        comments_pull = comments_pull.drop(['index', 'oid'], axis=1).rename({'time': 'date'}, axis=1)
+        comments_pull['key_file'] = None
+
+        comments = pd.concat((comments_pull, comments_file), axis=0).reset_index().drop(['index'], axis=1)
+
+        return pulls, commits, comments
