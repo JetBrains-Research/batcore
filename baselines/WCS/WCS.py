@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import numpy as np
+
 from RecommenderBase.recommender import RecommenderBase
 from baselines.WCS.utils import LCP
 
