@@ -22,7 +22,7 @@ class PRCFDataset(DatasetBase):
 
         pulls = pulls.groupby('key_change')[['file_path', 'reviewer_login', 'date', 'owner']].agg(
             {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
-             'date': lambda x: list(x)[0]}).reset_index()
+             'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0]}).reset_index()
 
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]

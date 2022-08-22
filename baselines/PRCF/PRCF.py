@@ -3,18 +3,21 @@ from collections import defaultdict
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 from baselines.PRCF.utils import pearson, LCP
 
 
-class PRCF(RecommenderBase):
+class PRCF(BanRecommenderBase):
     def __init__(self, users, pulls,
                  lambd=0.7, emd=20,
                  k=0.5, d=30,
                  delta=500, freq=100,
                  lr=1e-3, num_epochs=10,
-                 lambd2=0.05):
-        super().__init__()
+                 lambd2=0.05,
+                 no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
+        super().__init__(no_owner, no_inactive, inactive_time)
 
         self.mat = dok_matrix((len(users), len(pulls)))
         self.com_cnt = dok_matrix((len(users), len(pulls)))
@@ -42,8 +45,8 @@ class PRCF(RecommenderBase):
         self.q = np.random.normal(size=(len(pulls), emd))
         self.w = np.random.normal(size=(len(pulls), len(pulls)))
 
-    def predict(self, review, n=10):
-        close_reviews = self.transform(review)
+    def predict(self, pull, n=10):
+        close_reviews = self.transform(pull)
 
         scores = defaultdict(lambda: 0)
         for user in self.revs:
@@ -57,12 +60,17 @@ class PRCF(RecommenderBase):
                     score += self.implicit_eval(i, j)
             scores[user] = score
 
+        self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
 
         return sorted_users[:n]
 
     def fit(self, data):
+        if self.no_inactive:
+            self.update_time(data)
         for event in data:
+            if self.begin_time is None:
+                self.begin_time = event['date']
             if event['type'] == 'pull':
                 self.history.append(event)
                 self.revs.update(event['reviewer_login'])
@@ -74,9 +82,6 @@ class PRCF(RecommenderBase):
 
                 i = self.users.getid(user)
                 j = self.pulls.getid(pull)
-
-                if self.begin_time is None:
-                    self.begin_time = date
 
                 self.mat[i, j] += pow(self.lambd, self.com_cnt[i, j]) * (date - self.begin_time).seconds
                 self.com_cnt[i, j] += 1
