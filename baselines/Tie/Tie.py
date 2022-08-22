@@ -31,17 +31,17 @@ class Tie(RecommenderBase):
         self.max_date = max_date
         self.alpha = alpha
 
-    def predict(self, review, n=10):
+    def predict(self, pull, n=10):
         """Recommends appropriate reviewers of the given review.
             This method returns `max_count` reviewers at most.
         """
-        review = self._transform_review_format(review)
+        pull = self._transform_review_format(pull)
         L = []
         for j in range(len(self.reviewer_list)):
             # c = (1 - self.alpha) * self._get_conf_text(review, j) \
             #    + self.alpha * self._get_conf_path(review, j)
             # conf_text = self._get_conf_text(review, j)
-            conf_path = self._get_conf_path(review, j)
+            conf_path = self._get_conf_path(pull, j)
 
             # L.append([j, conf_text, 0])
             L.append([j, 0, conf_path])
@@ -65,21 +65,22 @@ class Tie(RecommenderBase):
         )
         return L[:n]
 
-    def fit(self, review):
+    def fit(self, data):
         """Updates the state of the model with an input review."""
-        review = self._transform_review_format(review)
+        pull = data[0]
+        pull = self._transform_review_format(pull)
 
-        if len(review["body"]) == 0:
+        if len(pull["body"]) == 0:
             raise Exception("Cannot update.")
 
-        for reviewer_index in review["reviewer_login"]:
+        for reviewer_index in pull["reviewer_login"]:
             self.review_count_map[reviewer_index] = \
                 self.review_count_map.get(reviewer_index, 0) + 1
-            for word_index in review["body"]:
+            for word_index in pull["body"]:
                 self.text_models[reviewer_index][word_index] = \
                     self.text_models[reviewer_index].get(word_index, 0) + 1
 
-        self.reviews.append(review)
+        self.reviews.append(pull)
 
     def _get_conf_path(self, review, reviewer_index):
 

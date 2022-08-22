@@ -17,17 +17,17 @@ class RevFinder:
 
         self._similarity_cache = [{} for _ in range(4)]
 
-    def predict(self, review, n=10):
+    def predict(self, pull, n=10):
         metrics = [LCP, LCSuff, LCSubstr, LCSubseq]
 
-        review = self._transform_review_format(review)
+        pull = self._transform_review_format(pull)
 
         rev_scores = [np.zeros(self.rev_count) for _ in metrics]
 
-        end_time = review["date"]
+        end_time = pull["date"]
         start_time = (datetime.fromtimestamp(end_time) - timedelta(days=self.max_date)).timestamp()
 
-        cf1 = review["file_path"][:500]
+        cf1 = pull["file_path"][:500]
 
         order_score = np.zeros(self.rev_count)
 
@@ -59,8 +59,9 @@ class RevFinder:
 
         return [self.reviewer_list[x] for x in final_sorted_revs[-n:][::-1]]
 
-    def fit(self, review):
-        self.history.append(self._transform_review_format(review))
+    def fit(self, data):
+        pull = data[0]
+        self.history.append(self._transform_review_format(pull))
 
     def _transform_review_format(self, review):
         reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in review["reviewer_login"]]
