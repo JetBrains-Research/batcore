@@ -2,12 +2,13 @@
 
 from datetime import datetime, timedelta
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 from baselines.Tie.utils import get_map
 
 
-class Tie(RecommenderBase):
-    def __init__(self, word_list, reviewer_list, text_splitter=lambda x: x.split(' '), alpha=0.7, max_date=100):
+class Tie(BanRecommenderBase):
+    def __init__(self, word_list, reviewer_list, text_splitter=lambda x: x.split(' '), alpha=0.7, max_date=100,
+                 no_owner=True, no_inactive=True, inactive_time=60):
         """
         :param word_list: word dictionary for pulls comments
         :param reviewer_list: list of all reviewers
@@ -15,7 +16,7 @@ class Tie(RecommenderBase):
         :param alpha: weight between path-based and text-based recommenders
         :param max_date: time in days after which reviews are not considered
         """
-        super().__init__()
+        super().__init__(no_owner, no_inactive, inactive_time)
         self.reviews = []
         self.word_list = word_list
         self.word_map = get_map(word_list)
@@ -40,12 +41,12 @@ class Tie(RecommenderBase):
         for j in range(len(self.reviewer_list)):
             # c = (1 - self.alpha) * self._get_conf_text(review, j) \
             #    + self.alpha * self._get_conf_path(review, j)
-            # conf_text = self._get_conf_text(review, j)
+            conf_text = self._get_conf_text(pull, j)
             conf_path = self._get_conf_path(pull, j)
 
             # L.append([j, conf_text, 0])
-            L.append([j, 0, conf_path])
-            # L.append([j, conf_text, conf_path])
+            # L.append([j, 0, conf_path])
+            L.append([j, conf_text, conf_path])
         conf_text_sum = sum(map(lambda x: x[1], L))
         conf_path_sum = sum(map(lambda x: x[2], L))
         if conf_text_sum == 0:
@@ -56,22 +57,27 @@ class Tie(RecommenderBase):
             triple[1] /= conf_text_sum
             triple[2] /= conf_path_sum
 
-        L.sort(key=lambda x: x[1] * self.alpha + x[2] * (1 - self.alpha), reverse=True)
-        scores = [x[2] for x in L[:n]]
-        L = list(
-            map(lambda x: self.reviewer_list[x],
-                map(lambda x: x[0], L)
-                )
-        )
-        return L[:n]
+        # L.sort(key=lambda x: x[1] * self.alpha + x[2] * (1 - self.alpha), reverse=True)
+        # scores = [x[2] for x in L[:n]]
+        scores = {self.reviewer_list[x[0]]: x[1] * self.alpha + x[2] * (1 - self.alpha) for x in L}
+        self.filter(scores, pull)
+        sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
+        return sorted_users[:n]
+        # L = list(
+        #     map(lambda x: self.reviewer_list[x],
+        #         map(lambda x: x[0], L)
+        #         )
+        # )
+        # return L[:n]
 
     def fit(self, data):
         """Updates the state of the model with an input review."""
+        super().fit(data)
         pull = data[0]
         pull = self._transform_review_format(pull)
 
-        if len(pull["body"]) == 0:
-            raise Exception("Cannot update.")
+        # if len(pull["body"]) == 0:
+        #     raise Exception("Cannot update.")
 
         for reviewer_index in pull["reviewer_login"]:
             self.review_count_map[reviewer_index] = \
@@ -86,7 +92,7 @@ class Tie(RecommenderBase):
 
         s = 0
         end_time = review["date"]
-        start_time = (datetime.fromtimestamp(end_time) - timedelta(days=self.max_date)).timestamp()
+        start_time = end_time - timedelta(days=self.max_date)
         for old_rev in reversed(self.reviews):
             if old_rev["date"] == end_time:
                 continue
@@ -129,19 +135,20 @@ class Tie(RecommenderBase):
         self._similarity_cache[key] = ret
         return ret
 
-    def _transform_review_format(self, review):
+    def _transform_review_format(self, pull):
         word_indices = list(map(lambda x: self.word_map[x],
                                 filter(lambda x: x in self.word_map.keys(),
-                                       self.text_splitter(review["body"])
+                                       self.text_splitter(pull["body"])
                                        )
                                 ))
-        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in review["reviewer_login"]]
+        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
         return {
             "body": word_indices,
             "reviewer_login": reviewer_indices,
-            "id": review["number"],
-            "date": review["date"].timestamp(),
-            "file_path": review["file_path"]
+            "id": pull["number"],
+            "date": pull["date"],
+            "file_path": pull["file_path"],
+            "owner": pull["owner"]
         }
 
     def _review_history_start_index(self, t):

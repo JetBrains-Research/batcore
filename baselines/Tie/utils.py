@@ -7,7 +7,7 @@ stemmer = LancasterStemmer()
 
 def get_all_reviewers(reviews):
     reviewer_set = set()
-    for _, review in reviews:
+    for review in reviews:
         for reviewer in review["reviewer_login"]:
             reviewer_set.add(reviewer)
     return list(reviewer_set)
@@ -42,7 +42,7 @@ def split_text(txt):
 
 def get_all_words(reviews):
     s = set()
-    for _, review in reviews:
+    for review in reviews:
         for w in split_text(review["body"]):
             s.add(w)
     l = list(s)

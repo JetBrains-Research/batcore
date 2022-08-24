@@ -13,12 +13,12 @@ class cHRevDataset(DatasetBase):
 
     def preprocess(self, dataset):
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
-        pulls = pulls[['file_path', 'number', 'reviewer_login', 'created_at', 'owner_id']].rename(
+        pulls = pulls[['file_path', 'number', 'reviewer_login', 'created_at', 'owner']].rename(
             {'created_at': 'date'}, axis=1)
 
-        pulls = pulls.groupby('number')[['file_path', 'reviewer_login', 'date', 'owner_id']].agg(
+        pulls = pulls.groupby('number')[['file_path', 'reviewer_login', 'date', 'owner']].agg(
             {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
-             'date': lambda x: list(x)[0]}).reset_index()
+             'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0]}).reset_index()
 
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
@@ -37,4 +37,3 @@ class cHRevDataset(DatasetBase):
 
     def get_revname(self):
         return 'reviewer_login'
-

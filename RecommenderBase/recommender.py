@@ -68,3 +68,7 @@ class BanRecommenderBase(RecommenderBase, ABC):
         if self.no_inactive:
             self.remove_inactive(scores, pull['date'])
 
+    def fit(self, data):
+        if self.no_inactive:
+            self.update_time(data)
+

@@ -69,6 +69,7 @@ class StreamUntilIterator(StreamIteratorBase):
         try:
             while self.data[self.ind + 1]['type'] != self.until_type:
                 self.ind += 1
+            return self.ind
         except IndexError:
             raise StopIteration
 

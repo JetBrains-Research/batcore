@@ -6,12 +6,14 @@ from scipy.sparse import dok_matrix
 import networkx as nx
 from community import community_louvain
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 
 
-class CN(RecommenderBase):
-    def __init__(self, users, lambd=0.5):
-        super().__init__()
+class CN(BanRecommenderBase):
+    def __init__(self, users, lambd=0.5,no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
+        super().__init__(no_owner, no_inactive, inactive_time)
 
         self.w = dok_matrix((len(users), len(users)))
         self.com_cnt = defaultdict(lambda: defaultdict(lambda: 0))
@@ -30,9 +32,9 @@ class CN(RecommenderBase):
 
         self.in_deg = dok_matrix((len(users), 1))
 
-    def predict(self, review, n=10):
+    def predict(self, pull, n=10):
 
-        owner = self.users.getid(review['owner'])
+        owner = self.users.getid(pull['owner'])
 
         if len(self.w.getcol(owner).nonzero()[0]) > 0:
             recs = self.predict_pac(owner, n)
@@ -45,6 +47,7 @@ class CN(RecommenderBase):
         return recs
 
     def fit(self, data):
+        super().fit(data)
         new_end_time = data[-1]['date']
         for event in data:
             if event['type'] == 'pull':
@@ -95,7 +98,7 @@ class CN(RecommenderBase):
             v = q.get()
             neighbours = self.w.getcol(v).nonzero()[1]
             neighbours = neighbours[mark[neighbours] == 0]
-            scores = self.w[i, neighbours].toarray()
+            scores = self.w[v, neighbours].toarray()
             for j in np.argsort(-scores)[0]:
                 v_nb = neighbours[j]
                 mark[v_nb] = 1
@@ -146,7 +149,8 @@ class CN(RecommenderBase):
             for c, cs in zip(com_id, com_size):
                 if ind >= cs:
                     continue
-                recs.append(com_nodes[c][ind])
+                if com_nodes[c][ind] != i:
+                    recs.append(com_nodes[c][ind])
                 if ind == cs - 1:
                     empty_cnt += 1
                 if len(recs) >= k:

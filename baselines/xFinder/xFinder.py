@@ -3,12 +3,15 @@ from datetime import datetime
 
 import numpy as np
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 
 
-class xFinder(RecommenderBase):
-    def __init__(self):
-        super().__init__()
+class xFinder(BanRecommenderBase):
+    def __init__(self,
+                 no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
+        super().__init__(no_owner, no_inactive, inactive_time)
 
         self.devcodemap = defaultdict(lambda: defaultdict(lambda: [0, 0, None]))
         self.filechange = defaultdict(lambda: [0, 0, None])
@@ -19,16 +22,17 @@ class xFinder(RecommenderBase):
         self.package_score = defaultdict(lambda: defaultdict(lambda: 0))  # won't hold for reviews
         self.project_score = defaultdict(lambda: defaultdict(lambda: 0))  # will hold for reviews
 
-    def predict(self, review, n=10):
+    def predict(self, pull, n=10):
         scores = defaultdict(lambda: 0)
-        for file in review['file_path']:
+        for file in pull['file_path']:
             file_val = self.filechange[file]
             for user in self.devcodemap[file]:
                 user_val = self.devcodemap[file][user]
                 scores[user] += 1 / np.sqrt((file_val[0] - user_val[0]) ** 2 +
                                             (file_val[1] - user_val[1]) ** 2 +
-                                            (file_val[2] - user_val[2]).days ** 2)
+                                            (file_val[2] - user_val[2]).days ** 2 + 1e-8)
 
+        self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
 
         # result = sorted_users[:n]
@@ -36,6 +40,7 @@ class xFinder(RecommenderBase):
         return sorted_users[:n]
 
     def fit(self, data):
+        super().fit(data)
         for event in data:
             if event['type'] == 'commit':
                 # normal score

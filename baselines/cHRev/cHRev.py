@@ -1,12 +1,14 @@
 from collections import defaultdict
 from datetime import datetime
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 
 
-class cHRev(RecommenderBase):
-    def __init__(self):
-        super().__init__()
+class cHRev(BanRecommenderBase):
+    def __init__(self, no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
+        super().__init__(no_owner, no_inactive, inactive_time)
 
         self.re = defaultdict(lambda: defaultdict(lambda: [0, 0, None]))
         self.fr = defaultdict(lambda: [0, 0, None])
@@ -14,9 +16,9 @@ class cHRev(RecommenderBase):
         self.re_date = defaultdict(lambda: defaultdict(lambda: datetime(year=1000, month=1, day=1).date()))
         self.fr_date = defaultdict(lambda: defaultdict(lambda: datetime(year=1000, month=1, day=1).date()))
 
-    def predict(self, review, n=10):
+    def predict(self, pull, n=10):
         scores = defaultdict(lambda: 0)
-        for file in review['file_path']:
+        for file in pull['file_path']:
             file_val = self.fr[file]
             for user in self.re[file]:
                 user_val = self.re[file][user]
@@ -26,12 +28,13 @@ class cHRev(RecommenderBase):
                 else:
                     scores[user] += 1 / (user_val[2] - file_val[2]).days
 
+        self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
-
 
         return sorted_users[:n]
 
     def fit(self, data):
+        super().fit(data)
         for event in data:
             if event['type'] == 'comment':
                 file = event['key_file']
