@@ -78,7 +78,7 @@ class RevFinder(BanRecommenderBase):
         reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
         return {
             "reviewer_login": np.array(reviewer_indices),
-            "id": pull["number"],
+            "id": pull["key_change"],
             "date": pull["date"],
             "file_path": [f.split('/') for f in pull["file_path"]],
             "owner": pull['owner']

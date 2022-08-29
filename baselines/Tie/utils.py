@@ -43,7 +43,7 @@ def split_text(txt):
 def get_all_words(reviews):
     s = set()
     for review in reviews:
-        for w in split_text(review["body"]):
+        for w in split_text(review["title"]):
             s.add(w)
     l = list(s)
     return l
