@@ -32,7 +32,7 @@ class DatasetBase(ABC):
         raise NotImplementedError()
 
 
-adclass GerritDataset:
+class GerritDataset:
     """
        Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
        download script and outputs in a comfortable format
