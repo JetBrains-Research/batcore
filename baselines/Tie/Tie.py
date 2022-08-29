@@ -82,7 +82,7 @@ class Tie(BanRecommenderBase):
         for reviewer_index in pull["reviewer_login"]:
             self.review_count_map[reviewer_index] = \
                 self.review_count_map.get(reviewer_index, 0) + 1
-            for word_index in pull["body"]:
+            for word_index in pull["title"]:
                 self.text_models[reviewer_index][word_index] = \
                     self.text_models[reviewer_index].get(word_index, 0) + 1
 
@@ -112,7 +112,7 @@ class Tie(BanRecommenderBase):
         s = 0
         for _, v in self.text_models[reviewer_index].items():
             s += v
-        for word_index in review["body"]:
+        for word_index in review["title"]:
             p = self.text_models[reviewer_index].get(word_index, 1e-9) / (s + 1)
             product *= p
         return self.review_count_map.get(reviewer_index, 0) / len(self.reviews) * product
@@ -138,14 +138,14 @@ class Tie(BanRecommenderBase):
     def _transform_review_format(self, pull):
         word_indices = list(map(lambda x: self.word_map[x],
                                 filter(lambda x: x in self.word_map.keys(),
-                                       self.text_splitter(pull["body"])
+                                       self.text_splitter(pull["title"])
                                        )
                                 ))
         reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
         return {
-            "body": word_indices,
+            "title": word_indices,
             "reviewer_login": reviewer_indices,
-            "id": pull["number"],
+            "id": pull["key_change"],
             "date": pull["date"],
             "file_path": pull["file_path"],
             "owner": pull["owner"]
