@@ -52,7 +52,7 @@ class StandardDataset(DatasetBase):
             data += events[event_type].to_dict('records')
         data = sorted(data, key=lambda x: x['date'])
 
-        self.additional_preprocessing(events)
+        self.additional_preprocessing(events, data)
 
         return data
 
@@ -100,7 +100,7 @@ class StandardDataset(DatasetBase):
     def itemize_files(self, events):
         self.files = ItemMap(events['pulls']['file_path'].sum())
 
-    def additional_preprocessing(self, events):
+    def additional_preprocessing(self, events, data):
         if self.user_items:
             self.itemize_users(events)
         if self.pull_items:

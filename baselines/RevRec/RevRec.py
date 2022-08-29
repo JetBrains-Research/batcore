@@ -4,16 +4,19 @@ from datetime import datetime
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from RecommenderBase.recommender import RecommenderBase
+from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 from baselines.RevRec.utils import norm, sim
 
 
-class RevRec(RecommenderBase):
+class RevRec(BanRecommenderBase):
     def __init__(self,
                  users,
                  k=0.5,
-                 ga_params=None):
-        super().__init__()
+                 ga_params=None,
+                 no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
+        super().__init__(no_owner, no_inactive, inactive_time)
 
         if ga_params is None:
             self.ga_params = {'max_rev': 10,
@@ -45,12 +48,18 @@ class RevRec(RecommenderBase):
         self.active_revs = 0
         self.test = set()
 
+        self.banned = None
+
     def get_re_score(self, r, re):
+        if (r * self.banned).sum() > 0:
+            return 0
         if self.ga_params['min_rev'] <= r.sum() <= self.ga_params['max_rev']:
             return (r * re).sum() / r.sum()
         return 0
 
     def get_rc_score(self, r, d):
+        if (r * self.banned).sum() > 0:
+            return 0
         if not self.ga_params['min_rev'] <= r.sum() <= self.ga_params['max_rev']:
             return 0
         ind = np.arange(self.active_revs)[r]
@@ -106,13 +115,26 @@ class RevRec(RecommenderBase):
         cnt = ps[: self.ga_params['k']].sum(axis=0)
         return best, cnt
 
-    def predict(self, review, n=10):
+    def set_banned(self, pull):
+        self.banned = np.zeros(self.active_revs)
+        if self.no_owner:
+            owner_id = self.users.getid(pull['owner'])
+            if owner_id < self.active_revs:
+                self.banned[owner_id] = 1
+        if self.no_inactive:
+            cur_date = pull['date']
+            for user in self.last_active:
+                if (cur_date - self.last_active[user]) > self.inactive_time:
+                    self.banned[self.users.getid(user)] = 1
+
+
+    def predict(self, pull, n=10):
         scores_re = defaultdict(lambda: 0)
 
         cf = defaultdict(lambda: 0)
         cr = defaultdict(lambda: datetime(year=10, month=1, day=1))
 
-        for file in review['file_path']:
+        for file in pull['file_path']:
             for f2 in self.com_file:
                 if sim(file, f2) > self.k:
                     for user in self.com_file[f2]:
@@ -125,7 +147,8 @@ class RevRec(RecommenderBase):
         for i in range(self.active_revs):
             re[i] = scores_re[self.users[i]]
 
-        best, cnt = self.run_ga(self.users.getid(review['owner']), re)
+        self.set_banned(pull)
+        best, cnt = self.run_ga(self.users.getid(pull['owner']), re)
 
         best_id = np.arange(len(best))[best]
         cnt = cnt[best]
@@ -134,6 +157,7 @@ class RevRec(RecommenderBase):
         return recs
 
     def fit(self, data):
+        super().fit(data)
         if self.start_date is None:
             self.start_date = data[0]['date']
 
