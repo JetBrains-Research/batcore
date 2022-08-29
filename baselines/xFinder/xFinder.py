@@ -7,6 +7,9 @@ from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 
 
 class xFinder(BanRecommenderBase):
+    """
+    dataset - commits
+    """
     def __init__(self,
                  no_owner=True,
                  no_inactive=True,

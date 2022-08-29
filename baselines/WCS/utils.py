@@ -10,18 +10,3 @@ def LCP(f1, f2):
         else:
             break
     return common_path
-
-
-class ItemMap:
-    def __init__(self, data):
-        self.id2item = list(dict.fromkeys(data))
-        self.item2id = {item: i for (i, item) in enumerate(self.id2item)}
-
-    def __getitem__(self, i):
-        return self.id2item[i]
-
-    def getid(self, item):
-        return self.item2id[item]
-
-    def __len__(self):
-        return len(self.id2item)

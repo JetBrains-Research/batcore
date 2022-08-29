@@ -10,6 +10,9 @@ from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
 
 
 class CN(BanRecommenderBase):
+    """
+    dataset - comments=True, user_items=True
+    """
     def __init__(self, users, lambd=0.5,no_owner=True,
                  no_inactive=True,
                  inactive_time=60):

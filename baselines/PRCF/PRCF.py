@@ -8,6 +8,9 @@ from baselines.PRCF.utils import pearson, LCP
 
 
 class PRCF(BanRecommenderBase):
+    """
+    dataset - comments, user_items, pull_items
+    """
     def __init__(self, users, pulls,
                  lambd=0.7, emd=20,
                  k=0.5, d=30,

@@ -7,7 +7,10 @@ from baselines.WCS.utils import LCP
 
 
 class WCS(BanRecommenderBase):
-    def __init__(self, files, users, delta=1, no_owner=True,
+    """
+    dataset - user_items, file_items
+    """
+    def __init__(self, users, files, delta=1, no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
         super().__init__(no_owner, no_inactive, inactive_time)
