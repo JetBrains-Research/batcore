@@ -54,7 +54,7 @@ class GerritDataset:
     @staticmethod
     def get_df(path):
         """
-        :param path: path to the directory with with csv files
+        :param path: path to the directory with csv files
         :return: dictionary with all dataframes for pulls and commits
         """
         data = {}
