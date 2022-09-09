@@ -31,18 +31,6 @@ def count_mean(metric_vals, bootstrap_prob=0.5, bootstrap_repeat=100):
     return real_mean, bt_var
 
 
-def count_accuracy(res, top_k):
-    num_rec = res['rev'].apply(lambda x: len(x))
-    result = {}
-    rev_set = res['rev'].apply(set)
-    for k in top_k:
-        res[f'acc@{k}'] = (rev_set - res[f'top-{k}'].apply(set)).apply(lambda x: len(x))
-        res[f'acc@{k}'] = res[f'acc@{k}'] < num_rec
-        result[f'acc@{k}'] = count_mean(res[f'acc@{k}'])
-
-    return result
-
-
 def count_mrr(res):
     rrs = []
     for _, row in res.iterrows():
@@ -54,57 +42,57 @@ def count_mrr(res):
     return {'mrr': count_mean(rrs)}
 
 
-def recall_one(gt, pred):
+def recall(gt, pred):
     gt = set(gt)
     pred = set(pred)
     return len(gt.intersection(pred)) / len(gt)
 
 
-def precision_one(gt, pred):
+def precision(gt, pred):
     gt = set(gt)
     pred = set(pred)
     return len(gt.intersection(pred)) / len(pred)
 
 
-def f1score_one(gt, pred):
-    recall = recall_one(gt, pred)
-    precision = precision_one(gt, pred)
-    return 2 * precision * recall / (precision + recall + 1e-8)
+def f1score(gt, pred):
+    recall_score = recall(gt, pred)
+    precision_score = precision(gt, pred)
+    return 2 * precision_score * recall_score / (precision_score + recall_score + 1e-8)
 
 
-def count_recall(res, top_k):
+def accuracy(gt, pred):
+    gt = set(gt)
+    pred = set(pred)
+
+    return len(gt.intersection(pred)) > 0
+
+
+def count_topk_metric(res, top_k, func, name='metric'):
     result = {}
     for k in top_k:
-        res[f'rec@{k}'] = res.apply(lambda x: recall_one(x['rev'], x[f'top-{k}']), axis=1)
-        result[f'rec@{k}'] = count_mean(res[f'rec@{k}'])
+        inter_result = res.apply(lambda x: func(x['rev'], x[f'top-{k}']), axis=1)
+        result[f'{name}@{k}'] = count_mean(inter_result)
 
     return result
 
 
-def count_precision(res, top_k):
-    result = {}
-    for k in top_k:
-        res[f'prec@{k}'] = res.apply(lambda x: precision_one(x['rev'], x[f'top-{k}']), axis=1)
-        result[f'prec@{k}'] = count_mean(res[f'prec@{k}'])
-
-    return result
+metric_func = {'acc': accuracy,
+               'rec': recall,
+               'prec': precision,
+               'f1': f1score}
 
 
-def count_f1(res, top_k):
-    result = {}
-    for k in top_k:
-        res[f'f1@{k}'] = res.apply(lambda x: f1score_one(x['rev'], x[f'top-{k}']), axis=1)
-        result[f'f1@{k}'] = count_mean(res[f'f1@{k}'])
+def count_metrics(res, metrics=None, top_k=None):
+    if top_k is None:
+        top_k = [1, 3, 5, 10]
 
-    return result
-
-
-def count_metrics(res, top_k):
+    if metrics is None:
+        metrics = ['acc', 'mrr', 'rec', 'prec', 'f1']
     res = res.copy()
     result = {}
-    result.update(count_accuracy(res, top_k))
-    result.update(count_mrr(res))
-    result.update(count_recall(res, top_k))
-    result.update(count_precision(res, top_k))
-    result.update(count_f1(res, top_k))
+    for metric in metrics:
+        if metric == 'mrr':
+            result.update(count_mrr(res))
+        else:
+            result.update(count_topk_metric(res, top_k, metric_func[metric], metric))
     return result
