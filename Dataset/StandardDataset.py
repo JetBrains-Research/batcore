@@ -58,14 +58,6 @@ class StandardDataset(DatasetBase):
 
     def get_pulls(self, dataset):
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
-        # pulls = pulls[pulls.created_at < to_date]
-        pulls = pulls[['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment']].rename(
-            {'created_at': 'date', 'comment': 'title'}, axis=1)
-
-        pulls = pulls.groupby('key_change')[['file_path', 'reviewer_login', 'date', 'owner', 'title']].agg(
-            {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
-             'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0],
-             'title': lambda x: list(x)[0]}).reset_index()
 
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]

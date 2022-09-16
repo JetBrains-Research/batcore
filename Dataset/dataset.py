@@ -1,7 +1,12 @@
 import os
 from abc import ABC, abstractmethod
 
+import numpy as np
+
+from .utils import time_interval, user_id_split
 import pandas as pd
+
+from AliasMatching.utils import get_clusters
 
 
 class DatasetBase(ABC):
@@ -32,13 +37,13 @@ class DatasetBase(ABC):
         raise NotImplementedError()
 
 
-class GerritDataset:
+class GerritLoader:
     """
        Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
        download script and outputs in a comfortable format
        """
 
-    def __init__(self, path, from_checkpoint=False):
+    def __init__(self, path, from_date=None, to_date=None, from_checkpoint=False):
         if from_checkpoint:
             self.pulls = pd.read_csv(path + '/pulls.csv')
             self.pulls.created_at = pd.to_datetime(self.pulls.created_at).dt.tz_localize(None)
@@ -46,10 +51,13 @@ class GerritDataset:
             self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
             self.comments = pd.read_csv(path + '/comments.csv')
             self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
+        else:
+            self.from_date = from_date
+            self.to_date = to_date
+            data = GerritLoader.get_df(path)
+            self.pulls, self.commits, self.comments = self.prepare(data)
 
-            return
-        data = GerritDataset.get_df(path)
-        self.pulls, self.commits, self.comments = GerritDataset.prepare(data)
+        self.prepare2()
 
     @staticmethod
     def get_df(path):
@@ -59,7 +67,7 @@ class GerritDataset:
         """
         data = {}
         for d in ['changes', 'changes_files', 'changes_reviewer', 'commits', 'commits_file', 'commits_author',
-                  'comments_file', 'comments_patch']:
+                  'comments_file', 'comments_patch', 'users']:
             cur_data = []
             for root, subdirs, files in os.walk(path + f'/{d}'):
                 for file in files:
@@ -71,17 +79,36 @@ class GerritDataset:
 
         return data
 
-    @staticmethod
-    def prepare(data):
+    def prepare(self, data):
         """
         :param data: dictionary with all dataframes
         :return: pulls and commits dataframes with all mined features
         """
+        # commits part
+        data['commits']['committed_date'] = pd.to_datetime(data['commits'].committed_date).dt.tz_localize(None)
+        data['commits'] = data['commits'][
+            time_interval(data['commits']['committed_date'], self.from_date, self.to_date)]
+        commits = data['commits'].merge(data['commits_file'],
+                                        left_on='key_commit',
+                                        right_on='key_commit').merge(data['commits_author'],
+                                                                     left_on='key_commit',
+                                                                     right_on='key_commit')
+
+        commits['date'] = pd.to_datetime(commits.committed_date).dt.tz_localize(None)
+
+        commits = commits.drop(
+            ['oid', 'index_x', 'index_y', 'index', 'committed_date', 'lines_inserted', 'lines_deleted', 'size',
+             'size_delta'], axis=1)
+        commits['key_file'] = commits['key_file'].apply(lambda x: x.replace(':', '/'))
 
         # pulls part
+
         data['changes_reviewer'] = data['changes_reviewer'].drop_duplicates()
         data['changes_files'] = data['changes_files'].drop_duplicates()
         data['changes'] = data['changes'].drop_duplicates()
+        data['changes']['created_at'] = pd.to_datetime(data['changes'].created_at).dt.tz_localize(None)
+
+        data['changes'] = data['changes'][time_interval(data['changes']['created_at'], self.from_date, self.to_date)]
 
         pulls = data['changes'].merge(data['changes_files'],
                                       left_on='key_change',
@@ -89,6 +116,7 @@ class GerritDataset:
                                                                                 left_on='key_change',
                                                                                 right_on='key_change',
                                                                                 how='inner')
+
         pulls = pulls.drop(
             ['index_x', 'index_y', 'index'], axis=1)
 
@@ -104,34 +132,67 @@ class GerritDataset:
         pulls['comment'] = pulls.comment.apply(lambda x: x.split('Reviewed-on')[0])
 
         # pulls = pulls[pulls.reviewer_login != 'Jenkins:']
-        # commits part
-
-        commits = data['commits'].merge(data['commits_file'],
-                                        left_on='key_commit',
-                                        right_on='key_commit').merge(data['commits_author'],
-                                                                     left_on='key_commit',
-                                                                     right_on='key_commit')
-
-        commits['date'] = pd.to_datetime(commits.committed_date).dt.tz_localize(None)
-
-        commits = commits.drop(
-            ['oid', 'index_x', 'index_y', 'index', 'committed_date', 'lines_inserted', 'lines_deleted', 'size',
-             'size_delta'], axis=1)
-        commits['key_file'] = commits['key_file'].apply(lambda x: x.replace(':', '/'))
 
         # comments part
         comments_file = data['comments_file']
         comments_file.time = pd.to_datetime(comments_file.time).dt.tz_localize(None)
+        comments_file = comments_file[time_interval(comments_file.time, self.from_date, self.to_date)]
         comments_file = comments_file.drop(['index'], axis=1).rename({'time': 'date'}, axis=1)
         comments_file['key_file'] = comments_file['key_file'].apply(lambda x: x.replace(':', '/'))
 
         comments_pull = data['comments_patch']
         comments_pull.time = pd.to_datetime(comments_pull.time).dt.tz_localize(None)
+        comments_pull = comments_pull[time_interval(comments_pull.time, self.from_date, self.to_date)]
+
         comments_pull = comments_pull.drop(['index', 'oid'], axis=1).rename({'time': 'date'}, axis=1)
         comments_pull['key_file'] = None
 
         comments = pd.concat((comments_pull, comments_file), axis=0).reset_index().drop(['index'], axis=1)
 
+        # users
         return pulls, commits, comments
 
+    def prepare2(self):
+        # alias matching
+        u1 = pd.unique(self.pulls.owner)
+        u2 = pd.unique(self.pulls.reviewer_login)
+        u3 = pd.unique(self.commits.key_user)
+        u4 = pd.unique(self.comments.key_user)
 
+        users = np.unique(np.hstack((u1, u2, u3, u4)))
+        users = [user_id_split(s) for s in users]
+
+        users = pd.DataFrame({'email': [u[1] for u in users],
+                              'name': [u[0] for u in users],
+                              'initial_id': [u[2] for u in users]})
+        clusters = get_clusters(users)
+
+        self.pulls.owner = self.pulls.owner.apply(lambda x: clusters[x])
+        self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: clusters[x])
+        self.commits.key_user = self.commits.key_user.apply(lambda x: clusters[x])
+        self.comments.key_user = self.comments.key_user.apply(lambda x: clusters[x])
+
+        self.pulls = self.pulls.dropna()
+        self.comments = self.comments.dropna()
+        self.commits = self.commits.dropna()
+
+        self.prepare_pulls()
+
+    def prepare_pulls(self):
+        # pulls = pulls[pulls.created_at < to_date]
+        self.pulls = self.pulls[['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment']].rename(
+            {'created_at': 'date', 'comment': 'title'}, axis=1)
+
+        self.pulls = self.pulls.groupby('key_change')[['file_path', 'reviewer_login', 'date', 'owner', 'title']].agg(
+            {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
+             'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0],
+             'title': lambda x: list(x)[0]}).reset_index()
+
+        pull_authors = self.commits.groupby('key_change').agg({'key_user': lambda x: set(x)}).reset_index()
+        pull_authors = pull_authors.rename({'key_user': 'author'}, axis=1)
+        self.pulls = self.pulls.merge(pull_authors, on='key_change', how='left')
+
+    def to_checkpoint(self, path):
+        self.pulls.to_csv(path + '/pulls.csv')
+        self.commits.to_csv(path + '/commits.csv')
+        self.comments.to_csv(path + '/comments.csv')

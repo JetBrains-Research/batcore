@@ -19,3 +19,14 @@ class ItemMap:
     def add(self, val):
         self.id2item.append(val)
         self.item2id[val] = len(self.id2item) - 1
+
+
+def time_interval(col, from_date, to_date):
+    return (col >= from_date) & (col <= to_date)
+
+
+def user_id_split(user_id):
+    id_parts = user_id.split(':')
+    fp = ':'.join(id_parts[:-1])
+    sp = id_parts[-1]
+    return fp, sp, user_id
