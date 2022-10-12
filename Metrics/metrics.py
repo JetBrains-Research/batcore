@@ -45,13 +45,17 @@ def count_mrr(res):
 def recall(gt, pred):
     gt = set(gt)
     pred = set(pred)
-    return len(gt.intersection(pred)) / len(gt)
+    if len(gt):
+        return len(gt.intersection(pred)) / len(gt)
+    return 0
 
 
 def precision(gt, pred):
     gt = set(gt)
     pred = set(pred)
-    return len(gt.intersection(pred)) / len(pred)
+    if len(pred):
+        return len(gt.intersection(pred)) / len(pred)
+    return 0
 
 
 def f1score(gt, pred):
