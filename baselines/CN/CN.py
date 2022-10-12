@@ -6,14 +6,15 @@ from scipy.sparse import dok_matrix
 import networkx as nx
 from community import community_louvain
 
-from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
+from RecommenderBase.recommender import BanRecommenderBase
 
 
 class CN(BanRecommenderBase):
     """
     dataset - comments=True, user_items=True
     """
-    def __init__(self, users, lambd=0.5,no_owner=True,
+
+    def __init__(self, users, lambd=0.5, no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
         super().__init__(no_owner, no_inactive, inactive_time)
@@ -81,10 +82,14 @@ class CN(BanRecommenderBase):
                     continue
 
                 val = pow(self.lambd, self.com_cnt[pull][j]) * (date - self.start_time).seconds
-                old_den = (self.end_time - self.start_time).seconds
                 new_den = (new_end_time - self.start_time).seconds
-                self.w[i, j] = (self.w[i, j] * old_den + val) / new_den
-                self.in_deg[j] = (self.in_deg[j] * old_den + val) / new_den
+                if self.in_deg[j] == 0:
+                    self.w[i, j] = val / new_den
+                    self.in_deg[j] = val / new_den
+                else:
+                    old_den = (self.end_time - self.start_time).seconds
+                    self.w[i, j] = (self.w[i, j] * old_den + val) / new_den
+                    self.in_deg[j] = (self.in_deg[j] * old_den + val) / new_den
 
                 self.com_cnt[pull][j] += 1
 
@@ -92,6 +97,7 @@ class CN(BanRecommenderBase):
 
     def predict_pac(self, i, k=10):
         mark = np.zeros(self.w.shape[0])
+        mark[i] = 1
         q = queue.Queue()
         q.put(i)
         recs = []
@@ -99,13 +105,16 @@ class CN(BanRecommenderBase):
             if len(recs) >= k:
                 break
             v = q.get()
-            neighbours = self.w.getcol(v).nonzero()[1]
-            neighbours = neighbours[mark[neighbours] == 0]
+            neighbours_1 = self.w.getcol(v).nonzero()[0]
+            neighbours = neighbours_1[mark[neighbours_1] == 0]
             scores = self.w[v, neighbours].toarray()
             for j in np.argsort(-scores)[0]:
                 v_nb = neighbours[j]
                 mark[v_nb] = 1
-                recs.append(v_nb)
+                if v_nb not in recs:
+                    recs.append(v_nb)
+                else:
+                    raise NameError('pac is wrong')
                 q.put(v_nb)
 
                 if len(recs) >= k:
@@ -118,7 +127,8 @@ class CN(BanRecommenderBase):
 
         best_recs = np.argpartition(-scores, k)[:k]
         sorted_recs = sorted(best_recs, key=lambda x: -self.num_revs[x])
-
+        if len(sorted_recs) != len(np.unique(sorted_recs)):
+            print('apriori')
         return sorted_recs
 
     def predict_community(self, i, k=10):
@@ -159,4 +169,6 @@ class CN(BanRecommenderBase):
                 if len(recs) >= k:
                     break
             ind += 1
+        if len(recs) != len(np.unique(recs)):
+            print('com')
         return recs
