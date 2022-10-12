@@ -8,6 +8,7 @@ class cHRev(BanRecommenderBase):
     """
     dataset: comments=True
     """
+
     def __init__(self, no_owner=True,
                  no_inactive=True,
                  inactive_time=60):

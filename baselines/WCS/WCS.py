@@ -43,11 +43,11 @@ class WCS(BanRecommenderBase):
     def fit(self, events):
         if self.no_inactive:
             self.update_time(events)
-        review = events[0]
-        self.reviews.append(review)
-        self.wcs = self.delta * self.wcs
+        for review in events:
+            self.reviews.append(review)
+            self.wcs = self.delta * self.wcs
 
-        for file in review['file_path']:
-            self.known_files.add(file)
-            for user in review['reviewer_login']:
-                self.wcs[self.files.getid(file), self.users.getid(user)] += 1 / len(review['reviewer_login'])
+            for file in review['file_path']:
+                self.known_files.add(file)
+                for user in review['reviewer_login']:
+                    self.wcs[self.files.getid(file), self.users.getid(user)] += 1 / len(review['reviewer_login'])
