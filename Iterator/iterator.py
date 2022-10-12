@@ -77,3 +77,25 @@ class StreamUntilIterator(StreamIteratorBase):
 class StreamAllIterator(StreamIteratorBase):
     def get_next(self):
         return self.ind
+
+
+class BatchStreamIterator(StreamIteratorBase):
+    def __init__(self, dataset, batch_size=10, until_type='pull'):
+        super().__init__(dataset)
+        self.until_type = until_type
+        self.bs = batch_size
+
+    def get_next(self):
+        if self.ind + 1 >= len(self.data):
+            raise StopIteration
+        og = self.ind
+        try:
+            cnt = 0
+            while cnt < self.bs:
+                self.ind += 1
+                while self.data[self.ind + 1]['type'] != self.until_type:
+                    self.ind += 1
+                cnt += 1
+            return self.ind
+        except IndexError:
+            raise StopIteration
