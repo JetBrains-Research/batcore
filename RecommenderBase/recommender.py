@@ -52,7 +52,8 @@ class BanRecommenderBase(RecommenderBase, ABC):
             if event['type'] == 'pull':
                 date = event['date']
                 try:
-                    self.last_active[event['owner']] = date
+                    for owner in event['owner']:
+                        self.last_active[owner] = date
                 except KeyError:
                     pass
                 for reviewer in event['reviewer_login']:
@@ -64,7 +65,8 @@ class BanRecommenderBase(RecommenderBase, ABC):
 
     def filter(self, scores, pull):
         if self.no_owner:
-            self.remove_user(scores, pull['owner'])
+            for owner in pull['owner']:
+                self.remove_user(scores, owner)
         if self.no_inactive:
             self.remove_inactive(scores, pull['date'])
 

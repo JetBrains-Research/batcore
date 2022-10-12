@@ -12,11 +12,14 @@ class StandardDataset(DatasetBase):
                  comments=False,
                  user_items=False,
                  file_items=False,
-                 pull_items=False
+                 pull_items=False,
+                 owner_policy=None,
+                 remove_owners=True
                  ):
         """
         :param max_file: maximum number of files that a review can have
         """
+        self.bad_pulls = None
         self.max_file = max_file
         self.commits = commits
         self.comments = comments
@@ -32,6 +35,9 @@ class StandardDataset(DatasetBase):
         self.pull_items = pull_items
         if self.pull_items:
             self.pulls = None
+
+        self.owner_policy = owner_policy
+        self.remove_owners = remove_owners
 
         super().__init__(dataset)
 
@@ -58,20 +64,39 @@ class StandardDataset(DatasetBase):
 
     def get_pulls(self, dataset):
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
+        self.bad_pulls = set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change'])
+        self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change']))
 
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
+        if self.owner_policy == 'author':
+            pulls.owner = pulls.author
+        elif self.owner_policy == 'author_no_na':
+            pulls.owner = pulls.author
+            pulls = pulls.dropna()
+        elif self.owner_policy == 'author_owner_fallback':
+            pulls.owner = pulls.apply(lambda x: x.author if len(x.author) else x.owner, axis=1)
+        else:
+            pulls.owner = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+
+        pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+        if self.remove_owners:
+            pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x['owner']],
+                                               axis=1)
+            pulls = pulls[pulls.reviewer_login.apply(lambda x: len(x) > 0)]
         pulls['type'] = 'pull'
 
         return pulls
 
     def get_commits(self, dataset):
         commits = dataset.commits
+        commits = commits[~commits['key_change'].isin(self.bad_pulls)]
         commits['type'] = 'commit'
         return commits
 
     def get_comments(self, dataset):
         comments = dataset.comments
+        comments = comments[~comments['key_change'].isin(self.bad_pulls)]
         comments['type'] = 'comment'
         return comments
 
