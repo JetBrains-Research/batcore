@@ -9,6 +9,9 @@ from baselines.RevRec.utils import norm, sim
 
 
 class RevRec(BanRecommenderBase):
+    """
+    dataset - users, comments
+    """
     def __init__(self,
                  users,
                  k=0.5,
@@ -43,10 +46,10 @@ class RevRec(BanRecommenderBase):
         self.rc_graph = dok_matrix((len(users), len(users)))
 
         self.pull_file_part = defaultdict(lambda: defaultdict(lambda: set()))
-        self.pull_owner = defaultdict(lambda: None)
+        self.pull_owners = defaultdict(lambda: [])
 
         self.active_revs = 0
-        self.test = set()
+        # self.test = set()
 
         self.banned = None
 
@@ -118,15 +121,16 @@ class RevRec(BanRecommenderBase):
     def set_banned(self, pull):
         self.banned = np.zeros(self.active_revs)
         if self.no_owner:
-            owner_id = self.users.getid(pull['owner'])
-            if owner_id < self.active_revs:
-                self.banned[owner_id] = 1
+            for owner in pull['owner']:
+                owner_id = self.users.getid(owner)
+                if owner_id < self.active_revs:
+                    self.banned[owner_id] = 1
         if self.no_inactive:
             cur_date = pull['date']
             for user in self.last_active:
-                if (cur_date - self.last_active[user]) > self.inactive_time:
-                    self.banned[self.users.getid(user)] = 1
-
+                if self.users.getid(user) < self.active_revs:
+                    if (cur_date - self.last_active[user]) > self.inactive_time:
+                        self.banned[self.users.getid(user)] = 1
 
     def predict(self, pull, n=10):
         scores_re = defaultdict(lambda: 0)
@@ -148,7 +152,8 @@ class RevRec(BanRecommenderBase):
             re[i] = scores_re[self.users[i]]
 
         self.set_banned(pull)
-        best, cnt = self.run_ga(self.users.getid(pull['owner']), re)
+        owners_id = [self.users.getid(owner) for owner in pull['owner']]
+        best, cnt = self.run_ga(owners_id, re)
 
         best_id = np.arange(len(best))[best]
         cnt = cnt[best]
@@ -164,16 +169,15 @@ class RevRec(BanRecommenderBase):
         for event in data:
             if event['type'] == 'pull':
                 pull = event['key_change']
-                user = event['owner']
-                self.pull_owner[pull] = self.users.getid(user)
+                self.pull_owners[pull] = [self.users.getid(user) for user in event['owner']]
 
                 for rev in event['reviewer_login']:
                     self.active_revs = max(self.active_revs, self.users.getid(rev) + 1)
-                    self.test.add(self.users.getid(rev))
+                    # self.test.add(self.users.getid(rev))
 
             elif event['type'] == 'comment':
                 pull = event['key_change']
-                owner_id = self.pull_owner[pull]
+                owners_id = self.pull_owners[pull]
                 user = event['key_user']
                 user_id = self.users.getid(user)
 
@@ -191,8 +195,9 @@ class RevRec(BanRecommenderBase):
                         self.rc_graph[i, user_id] += 1
                     self.pull_file_part[pull][file].add(user_id)
 
-                if (owner_id is not None) and (user_id != owner_id):
-                    self.rc_graph[owner_id, user_id] += 1
-                    self.rc_graph[user_id, owner_id] += 1
+                for owner_id in owners_id:
+                    if user_id != owner_id:
+                        self.rc_graph[owner_id, user_id] += 1
+                        self.rc_graph[user_id, owner_id] += 1
 
         self.end_date = data[-1]['date']
