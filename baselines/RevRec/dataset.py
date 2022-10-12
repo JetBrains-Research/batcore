@@ -15,7 +15,7 @@ class RevRecDataset(StandardDataset):
             if event['type'] == 'pull':
                 for rev in event['reviewer_login']:
                     self.users.add2(rev)
-        for user in pd.unique(events['pulls']['owner']):
+        for user in pd.unique(events['pulls']['owner'].sum()):
             self.users.add2(user)
 
         for user in pd.unique(events['comments']['key_user']):

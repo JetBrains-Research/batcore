@@ -1,3 +1,4 @@
+import ast
 import os
 from abc import ABC, abstractmethod
 
@@ -46,7 +47,15 @@ class GerritLoader:
     def __init__(self, path, from_date=None, to_date=None, from_checkpoint=False):
         if from_checkpoint:
             self.pulls = pd.read_csv(path + '/pulls.csv')
-            self.pulls.created_at = pd.to_datetime(self.pulls.created_at).dt.tz_localize(None)
+            self.pulls.date = pd.to_datetime(self.pulls.date).dt.tz_localize(None)
+
+            self.pulls.file_path = self.pulls.file_path.apply(ast.literal_eval)
+            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval).apply(
+                lambda x: [int(i) for i in x])
+            self.pulls.owner = self.pulls.owner.apply(lambda x: [int(x)])
+            self.pulls.author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else []).apply(
+                lambda x: [int(i) for i in x])
+
             self.commits = pd.read_csv(path + '/commits.csv')
             self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
             self.comments = pd.read_csv(path + '/comments.csv')
@@ -56,8 +65,7 @@ class GerritLoader:
             self.to_date = to_date
             data = GerritLoader.get_df(path)
             self.pulls, self.commits, self.comments = self.prepare(data)
-
-        self.prepare2()
+            self.prepare2()
 
     @staticmethod
     def get_df(path):
@@ -98,8 +106,9 @@ class GerritLoader:
 
         commits = commits.drop(
             ['oid', 'index_x', 'index_y', 'index', 'committed_date', 'lines_inserted', 'lines_deleted', 'size',
-             'size_delta'], axis=1)
+             'size_delta', 'uploader_key_user', 'committer_key_user'], axis=1)
         commits['key_file'] = commits['key_file'].apply(lambda x: x.replace(':', '/'))
+        commits = commits.rename({'author_key_user': 'key_user'}, axis=1)
 
         # pulls part
 
@@ -180,13 +189,15 @@ class GerritLoader:
 
     def prepare_pulls(self):
         # pulls = pulls[pulls.created_at < to_date]
-        self.pulls = self.pulls[['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment']].rename(
+        self.pulls = self.pulls[
+            ['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment', 'status']].rename(
             {'created_at': 'date', 'comment': 'title'}, axis=1)
 
-        self.pulls = self.pulls.groupby('key_change')[['file_path', 'reviewer_login', 'date', 'owner', 'title']].agg(
+        self.pulls = self.pulls.groupby('key_change')[
+            ['file_path', 'reviewer_login', 'date', 'owner', 'title', 'status']].agg(
             {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
              'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0],
-             'title': lambda x: list(x)[0]}).reset_index()
+             'title': lambda x: list(x)[0], 'status': lambda x: list(x)[0]}).reset_index()
 
         pull_authors = self.commits.groupby('key_change').agg({'key_user': lambda x: set(x)}).reset_index()
         pull_authors = pull_authors.rename({'key_user': 'author'}, axis=1)
