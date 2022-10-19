@@ -127,3 +127,13 @@ class StandardDataset(DatasetBase):
 
     def replace(self, data, cur_rec):
         pass
+
+    def get_items2ids(self):
+        ret = {}
+        if self.user_items:
+            ret['users'] = self.users
+        if self.pull_items:
+            ret['pulls'] = self.pulls
+        if self.file_items:
+            ret['files'] = self.files
+        return ret
