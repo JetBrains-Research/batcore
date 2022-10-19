@@ -1,26 +1,48 @@
 from collections import defaultdict
 from datetime import datetime
 
-from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
+from RecommenderBase.recommender import BanRecommenderBase
 
 
 class cHRev(BanRecommenderBase):
     """
-    dataset: comments=True
+    cHRev recommends candidates based on their commenting history. For this xFactor is calculated which measures
+    relative portion and time recency of comments done by a candidate to the files
+
+    dataset - StandardDataset(data, comments=True)
+
+    Paper: "Automatically Recommending Peer Reviewers in Modern Code Review"
     """
 
-    def __init__(self, no_owner=True,
+    def __init__(self,
+                 no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
+        """
+        :param no_owner: flag to add or remove owners of the pull request from the recommendations
+        :param no_inactive: flag to add or remove inactive reviewers from recommendations
+        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
+        """
         super().__init__(no_owner, no_inactive, inactive_time)
 
+        # reviewer expertise map. dict with (file, commenter)-triplet relation
+        # triplet - (number of comments to the file, number of workdays when file was commented on, last comment date)
         self.re = defaultdict(lambda: defaultdict(lambda: [0, 0, None]))
+
+        # file review map - dict with file-triplet relation
+        # triplet - (number of comments to the file, number of workdays when file was commented on, last comment date)
         self.fr = defaultdict(lambda: [0, 0, None])
 
+        # for each file-user pair stores last comment date
         self.re_date = defaultdict(lambda: defaultdict(lambda: datetime(year=1000, month=1, day=1).date()))
+        # for each file stores last comment date
         self.fr_date = defaultdict(lambda: defaultdict(lambda: datetime(year=1000, month=1, day=1).date()))
 
     def predict(self, pull, n=10):
+        """
+        scoring of candidates is performed by xFactor (equation 1-2 from the paper)
+        :return: predicts at most :param n: reviewers for the :param pull:
+        """
         scores = defaultdict(lambda: 0)
         for file in pull['file_path']:
             file_val = self.fr[file]

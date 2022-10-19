@@ -6,12 +6,29 @@ from RecommenderBase.recommender import BanRecommenderBase
 
 class ACRec(BanRecommenderBase):
     """
-    dataset - comments=True
+    ACRec recommends reviewers based on how much they commented on recent pull requests. For this ACRec looks on
+    previous reviews in a given timeframe and for each comment assigns its commenter a score based on the time
+    passed. Candidates with the best accumulated scores are suggested as reviewers
+
+    dataset - StandardDataset(data, comments=True)
+
+    Paper: "Who Should Comment on This Pull Request? Analyzing Attributes for More Accurate
+    Commenter Recommendation in Pull-Based Development"
     """
-    def __init__(self, gamma=60, lambd=0.5,
+
+    def __init__(self,
+                 gamma=60,
+                 lambd=0.5,
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
+        """
+        :param gamma: number of days to pass for a pull request to ignored during predictions
+        :param lambd:
+        :param no_owner: flag to add or remove owners of the pull request from the recommendations
+        :param no_inactive: flag to add or remove inactive reviewers from recommendations
+        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
+        """
         super().__init__(no_owner, no_inactive, inactive_time)
 
         self.gamma = timedelta(days=gamma)
@@ -21,6 +38,13 @@ class ACRec(BanRecommenderBase):
         self.commenters = defaultdict(lambda: [])
 
     def predict(self, pull, n=10):
+        """
+        :param pull: pull requests for which reviwers are required
+        :param n: number of reviewers to recommend
+        :return: at most n reviewers
+
+        goes through recent pull requests and accumulates score for each commenter based on the recency of their comment
+        """
         scores = defaultdict(lambda: 0)
         date = pull['date']
         for review_old in reversed(self.history):
@@ -35,6 +59,10 @@ class ACRec(BanRecommenderBase):
         return sorted_users[:n]
 
     def fit(self, data):
+        """
+        :param data: a batch of pull requests and comments
+        remembers each pull request and build relation between them and comments
+        """
         super().fit(data)
         for event in data:
             if event['type'] == 'pull':

@@ -26,6 +26,10 @@ class ItemMap:
 
 
 def camel_split(path):
+    """
+    :param path: file path
+    :return: tokens from path split by '/' and camel case
+    """
     tokens = []
     cur_token = ""
     for c in path:
@@ -41,12 +45,21 @@ def camel_split(path):
 
 
 def sim(f1, f2):
+    """
+    :param f1: file path1
+    :param f2: file path2
+    :return: similarity measure between files
+    """
     t1 = set(camel_split(f1))
     t2 = set(camel_split(f2))
     return len(t1.intersection(t2)) / len(t1.union(t2))
 
 
 def norm(p):
+    """
+    :param p: list of scores
+    :return: min-max score normalizarion
+    """
     p -= p.min()
     if p.max() == 0:
         return p
