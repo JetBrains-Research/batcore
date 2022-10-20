@@ -6,6 +6,9 @@ stemmer = LancasterStemmer()
 
 
 def get_all_reviewers(reviews):
+    """
+    collects all possible reviewers
+    """
     reviewer_set = set()
     for review in reviews:
         for reviewer in review["reviewer_login"]:
@@ -14,6 +17,9 @@ def get_all_reviewers(reviews):
 
 
 def is_word_useful(word):
+    """
+    word filtering. removes digits and websites
+    """
     for c in word:
         if c.isdigit():
             return False
@@ -23,6 +29,9 @@ def is_word_useful(word):
 
 
 def word_stem(word):
+    """
+    removes punctuation and stems with LancasterStemmer
+    """
     if word.endswith('.') or word.endswith(',') or word.endswith(':') or word.endswith('\'') or word.endswith('\"'):
         word = word[:-1]
     if word.startswith(',') or word.startswith('.') or word.startswith(':') or word.startswith('\'') or word.startswith(
@@ -32,6 +41,9 @@ def word_stem(word):
 
 
 def split_text(txt):
+    """
+    Splits text, filters and stems words
+    """
     splitted_words = list(
         map(lambda x: word_stem(x),
             filter(lambda x: is_word_useful(x), re.split(r"[\s\n\t]+", txt))
@@ -41,6 +53,9 @@ def split_text(txt):
 
 
 def get_all_words(reviews):
+    """
+    gets list all possible words in reviews
+    """
     s = set()
     for review in reviews:
         for w in split_text(review["title"]):

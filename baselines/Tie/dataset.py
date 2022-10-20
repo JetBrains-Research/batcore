@@ -14,3 +14,8 @@ class TieDataset(StandardDataset):
     def additional_preprocessing(self, events, data):
         self.reviewers = get_all_reviewers(data)
         self.words = get_all_words(data)
+
+    def get_items2ids(self):
+        ret = {'reviewer_list': self.reviewers,
+               'word_list': self.words}
+        return ret

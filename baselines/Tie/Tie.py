@@ -7,25 +7,42 @@ from baselines.Tie.utils import get_map
 
 
 class Tie(BanRecommenderBase):
-    def __init__(self, word_list, reviewer_list, text_splitter=lambda x: x.split(' '), alpha=0.7, max_date=100,
-                 no_owner=True, no_inactive=True, inactive_time=60):
+    """
+    Tie recommends reviewers based on file paths and the title. Each candidate is assigned two scores. One is based
+    on path distance between files in current pr and previously reviewed file. Second is a score from naive Bayes
+    classifier trained on the titles of prs.
+
+    dataset - TieDataset(data)
+    Paper: "Who Should Review This Change? Putting Text and File Location Analyses Together for More Accurate
+    Recommendations"
+    """
+    def __init__(self,
+                 item_list,
+                 text_splitter=lambda x: x.split(' '),
+                 alpha=0.7,
+                 max_date=100,
+                 no_owner=True,
+                 no_inactive=True,
+                 inactive_time=60):
         """
-        :param word_list: word dictionary for pulls comments
-        :param reviewer_list: list of all reviewers
+        :param item_list: dict with word_list and reviewer_list
         :param text_splitter: a function to parse pull comments
         :param alpha: weight between path-based and text-based recommenders
         :param max_date: time in days after which reviews are not considered
+        :param no_owner: flag to add or remove owners of the pull request from the recommendations
+        :param no_inactive: flag to add or remove inactive reviewers from recommendations
+        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
         """
         super().__init__(no_owner, no_inactive, inactive_time)
         self.reviews = []
-        self.word_list = word_list
-        self.word_map = get_map(word_list)
+        self.word_list = item_list['word_list']
+        self.word_map = get_map(item_list['word_list'])
 
-        self.reviewer_list = reviewer_list
-        self.reviewer_map = get_map(reviewer_list)
+        self.reviewer_list = item_list['reviewer_list']
+        self.reviewer_map = get_map(item_list['reviewer_list'])
         self.review_count_map = {}
 
-        self.text_models = [dict() for _ in range(len(reviewer_list))]
+        self.text_models = [dict() for _ in range(len(item_list['reviewer_list']))]
         self._similarity_cache = {}
         self.text_splitter = text_splitter
 
@@ -33,8 +50,9 @@ class Tie(BanRecommenderBase):
         self.alpha = alpha
 
     def predict(self, pull, n=10):
-        """Recommends appropriate reviewers of the given review.
-            This method returns `max_count` reviewers at most.
+        """
+        Recommends appropriate reviewers of the given review. This method returns `max_count` reviewers at most.
+        :param n: number of candidates to return
         """
         pull = self._transform_review_format(pull)
         L = []
