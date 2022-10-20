@@ -9,34 +9,59 @@ from community import community_louvain
 from RecommenderBase.recommender import BanRecommenderBase
 
 
+# TODO look into multiple owners
 class CN(BanRecommenderBase):
     """
-    dataset - comments=True, user_items=True
+    CN recommends reviewers based on their comments on previous reviews. For this a Comment Network (weighted directed graph is
+    constructed). Vertices are developers in the project and edges represents weighted number of reviewing
+    interactions. Scores to each candidate are assigned based on the distance in graph
+
+    dataset - StandardDataset(data, comments=True, user_items=True)
+
+    Paper: "Reviewer Recommendation for Pull-Requests in GitHub: What Can We Learn from Code Review and Bug Assignment?"
     """
 
-    def __init__(self, users, lambd=0.5, no_owner=True,
+    def __init__(self,
+                 items2ids,
+                 lambd=0.5,
+                 no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
+        """
+        :param items2ids: dict with user2id
+        :param lambd: weight decay coefficient for comments within a single review beyond the first one
+        :param no_owner: flag to add or remove owners of the pull request from the recommendations
+        :param no_inactive: flag to add or remove inactive reviewers from recommendations
+        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
+        """
         super().__init__(no_owner, no_inactive, inactive_time)
 
-        self.w = dok_matrix((len(users), len(users)))
+        self.users = items2ids['users']
+
+        # Adjacency matrix of developers comment interactions
+        self.w = dok_matrix((len(self.users), len(self.users)))
+
         self.com_cnt = defaultdict(lambda: defaultdict(lambda: 0))
         self.pull_owner = defaultdict(lambda: None)
 
         self.lambd = lambd
 
-        self.users = users
-
         self.start_time = None
         self.end_time = None
 
+        # total number of pull requests
         self.pull_count = 0
-        self.num_revs = np.zeros(len(users))
-        self.cooc = np.zeros((len(users), len(users)))
+        # number of reviews performed by user
+        self.num_revs = np.zeros(len(self.users))
+        # matrix of co-occurrences of reviewers within pull-requests
+        self.cooc = np.zeros((len(self.users), len(self.users)))
 
-        self.in_deg = dok_matrix((len(users), 1))
+        self.in_deg = dok_matrix((len(self.users), 1))
 
     def predict(self, pull, n=10):
+        """
+        recommends reviewers based on owner of the pull request
+        """
 
         owner = self.users.getid(pull['owner'])
 
@@ -51,6 +76,9 @@ class CN(BanRecommenderBase):
         return recs
 
     def fit(self, data):
+        """
+        updates CN graph and supporting characteristics
+        """
         super().fit(data)
         new_end_time = data[-1]['date']
         for event in data:
@@ -64,7 +92,7 @@ class CN(BanRecommenderBase):
                 self.pull_count += 1
                 if len(event['reviewer_login']):
                     rev_ind = np.array([self.users.getid(rev) for rev in event['reviewer_login']])
-                    self.num_revs += 1
+                    self.num_revs[rev_ind] += 1
                     self.cooc[tuple(np.meshgrid(rev_ind, rev_ind))] += 1
 
             elif event['type'] == 'comment':
@@ -96,6 +124,10 @@ class CN(BanRecommenderBase):
         self.end_time = new_end_time
 
     def predict_pac(self, i, k=10):
+        """
+        PAC prediction recommendations are for the owners that have that had previous pull requests that have been reviewed e.i.
+        their internal degree > 0
+        """
         mark = np.zeros(self.w.shape[0])
         mark[i] = 1
         q = queue.Queue()
@@ -122,6 +154,9 @@ class CN(BanRecommenderBase):
         return recs
 
     def predict_apriori(self, i, k=10):
+        """
+        Predict apriori suggest reviewers for the prs with owners that had commented previously on other prs
+        """
         scores = self.cooc[i]
         scores[i] = -1
 
@@ -132,6 +167,9 @@ class CN(BanRecommenderBase):
         return sorted_recs
 
     def predict_community(self, i, k=10):
+        """
+        Suggest reviewers for prs of newcomers that had no interactions with others
+        """
         g = nx.Graph(self.w.toarray())
         cm = community_louvain.best_partition(g)
 
