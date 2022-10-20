@@ -8,13 +8,14 @@
 # Written By: Patanamon Thongtanunam (patanamon-t@is.naist.jp)
 #########################################################################
 
-def path2List(fileString):
+def path2list(fileString):
     return fileString.split("/")
 
 
 def LCP(f1, f2):
-    #     f1 = path2List(f1)
-    #     f2 = path2List(f2)
+    """
+    Longest Common Prefix
+    """
     common_path = 0
     min_length = min(len(f1), len(f2))
     for i in range(min_length):
@@ -26,8 +27,7 @@ def LCP(f1, f2):
 
 
 def LCSuff(f1, f2):
-    #     f1 = path2List(f1)
-    #     f2 = path2List(f2)
+    """Longest Common Suffiz"""
     common_path = 0
     r = range(min(len(f1), len(f2)))
     for i in reversed(r):
@@ -39,8 +39,7 @@ def LCSuff(f1, f2):
 
 
 def LCSubstr(f1, f2):
-    #     f1 = path2List(f1)
-    #     f2 = path2List(f2)
+    """Longest Common Substring"""
     common_path = 0
     if len(set(f1) & set(f2)) > 0:
         mat = [[0 for _ in range(len(f2) + 1)] for _ in range(len(f1) + 1)]
@@ -57,8 +56,7 @@ def LCSubstr(f1, f2):
 
 
 def LCSubseq(f1, f2):
-    #     f1 = path2List(f1)
-    #     f2 = path2List(f2)
+    """Longest Common Subsequence"""
     if len(set(f1) & set(f2)) > 0:
         L = [[0 for x in range(len(f2) + 1)] for x in range(len(f1) + 1)]
         for i in range(len(f1) + 1):
