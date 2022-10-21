@@ -16,7 +16,13 @@ def count_confidence(sample):
     return d
 
 
-def count_mean(metric_vals, bootstrap_prob=0.5, bootstrap_repeat=100):
+def bootstrap_estimation(metric_vals, bootstrap_prob=0.5, bootstrap_repeat=100):
+    """
+    :param metric_vals: metrics values per data-point
+    :param bootstrap_prob: probability of the data-point to appear in sub-sample
+    :param bootstrap_repeat: number of bootstrap iterations
+    :return: real mean and bootstrap variance estimation
+    """
     metric_vals = np.array(metric_vals)
     real_mean = np.mean(metric_vals)
 
@@ -32,6 +38,11 @@ def count_mean(metric_vals, bootstrap_prob=0.5, bootstrap_repeat=100):
 
 
 def count_mrr(res):
+    """
+    :param res: pd.DataFrame with prediction done by the model. Should have column 'rev' that represents ground truth.
+    Also column 'top-10' that represents best 10 suggestions
+    :return: mean and std of reciprocal ranks
+    """
     rrs = []
     for _, row in res.iterrows():
         rr = [np.inf]
@@ -39,10 +50,15 @@ def count_mrr(res):
             rr = min(rr, 1 + np.where(np.array(row['top-10']) == t)[0])
         rrs.append(1 / rr[0])
 
-    return {'mrr': count_mean(rrs)}
+    return {'mrr': bootstrap_estimation(rrs)}
 
 
 def recall(gt, pred):
+    """
+    :param gt: ground truth
+    :param pred: predictions
+    :return: Recall score
+    """
     gt = set(gt)
     pred = set(pred)
     if len(gt):
@@ -51,6 +67,11 @@ def recall(gt, pred):
 
 
 def precision(gt, pred):
+    """
+    :param gt: ground truth
+    :param pred: predictions
+    :return: precision score
+    """
     gt = set(gt)
     pred = set(pred)
     if len(pred):
@@ -59,23 +80,41 @@ def precision(gt, pred):
 
 
 def f1score(gt, pred):
+    """
+    :param gt: ground truth
+    :param pred: predictions
+    :return: F1 score
+    """
     recall_score = recall(gt, pred)
     precision_score = precision(gt, pred)
     return 2 * precision_score * recall_score / (precision_score + recall_score + 1e-8)
 
 
 def accuracy(gt, pred):
+    """
+    :param gt: ground truth
+    :param pred: predictions
+    :return: accuracy score
+    """
     gt = set(gt)
     pred = set(pred)
 
     return len(gt.intersection(pred)) > 0
 
 
-def count_topk_metric(res, top_k, func, name='metric'):
+def count_topk_metric(res, top_k, metric, name='metric'):
+    """
+    :param res: pd.DataFrame with prediction done by the model. Column 'rev' represents ground truth. Column 'top-k'
+    represents best k suggestions
+    :param top_k: list with amount of the best suggestions
+    :param metric: metric function
+    :param name: name of the metric
+    :return: dict with mean values and stds for each metric calculated for each of the top-k suggestions
+    """
     result = {}
     for k in top_k:
-        inter_result = res.apply(lambda x: func(x['rev'], x[f'top-{k}']), axis=1)
-        result[f'{name}@{k}'] = count_mean(inter_result)
+        inter_result = res.apply(lambda x: metric(x['rev'], x[f'top-{k}']), axis=1)
+        result[f'{name}@{k}'] = bootstrap_estimation(inter_result)
 
     return result
 
@@ -87,6 +126,12 @@ metric_func = {'acc': accuracy,
 
 
 def count_metrics(res, metrics=None, top_k=None):
+    """
+    :param res: pd.DataFrame with prediction done by the model.
+    :param metrics: metrics to calculate
+    :param top_k: list of k-s for top k metrics
+    :return:  dict with mean values and variance for each metric
+    """
     if top_k is None:
         top_k = [1, 3, 5, 10]
 
