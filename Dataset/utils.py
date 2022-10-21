@@ -22,10 +22,16 @@ class ItemMap:
 
 
 def time_interval(col, from_date, to_date):
+    """
+    :return: column with rows which lies within [from_data; to_date]
+    """
     return (col >= from_date) & (col <= to_date)
 
 
 def user_id_split(user_id):
+    """
+    :return: split user_id into email, name, and login
+    """
     id_parts = user_id.split(':')
     fp = ':'.join(id_parts[:-1])
     sp = id_parts[-1]

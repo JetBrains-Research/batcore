@@ -5,6 +5,10 @@ from Dataset.utils import ItemMap
 
 
 class StandardDataset(DatasetBase):
+    """
+    Dataset for most of the implemented models.
+    """
+
     def __init__(self,
                  dataset,
                  max_file=200,
@@ -17,8 +21,22 @@ class StandardDataset(DatasetBase):
                  remove_owners=True
                  ):
         """
+
+        :param dataset: GerritLoader-like object
         :param max_file: maximum number of files that a review can have
+        :param commits: if False commits are omitted from the data
+        :param comments: if False comments are omitted from the data
+        :param user_items: if True user2id map is created
+        :param file_items: if True file2id map is created
+        :param pull_items: if true pull2id map is created
+        :param owner_policy: how pull owners are calculated.
+            * None - owners are unchanged
+            * author - commit authors of the pull are treated as owners
+            * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
+            * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
+        :param remove_owners: if True owners of the pull request are removed from the reviewers list
         """
+
         self.bad_pulls = None
         self.max_file = max_file
         self.commits = commits
@@ -42,6 +60,10 @@ class StandardDataset(DatasetBase):
         super().__init__(dataset)
 
     def preprocess(self, dataset):
+        """
+        :param dataset: GerritLoader-like dataset
+        :return: preprocess all necessary events and returns them as data stream
+        """
 
         pulls = self.get_pulls(dataset)
 
@@ -63,12 +85,22 @@ class StandardDataset(DatasetBase):
         return data
 
     def get_pulls(self, dataset):
+        """
+        :param dataset: GerritLoader-like dataset
+        :return: preprocessed pulls dataframe
+        """
+        # remove opened pulls. only Merged and Abandoned stay
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
+        # remember pull w/out reviewers
         self.bad_pulls = set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change'])
+        # remember big pulls
         self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change']))
 
+        # remove big pulls and pull w/out reviewers
         pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
+
+        # owner estimation
         if self.owner_policy == 'author':
             pulls.owner = pulls.author
         elif self.owner_policy == 'author_no_na':
@@ -80,27 +112,42 @@ class StandardDataset(DatasetBase):
             pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
 
         pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+
         if self.remove_owners:
             pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x['owner']],
                                                axis=1)
             pulls = pulls[pulls.reviewer_login.apply(lambda x: len(x) > 0)]
+        # add label
         pulls['type'] = 'pull'
 
         return pulls
 
     def get_commits(self, dataset):
+        """
+        :param dataset: GerritLoader-like dataset
+        :return: preprocessed commits dataframe
+        """
         commits = dataset.commits
+        # remove commits to the bad pulls
         commits = commits[~commits['key_change'].isin(self.bad_pulls)]
         commits['type'] = 'commit'
         return commits
 
     def get_comments(self, dataset):
+        """
+        :param dataset: GerritLoader-like dataset
+        :return: preprocessed commits dataframe
+        """
         comments = dataset.comments
+        # remove comments to the bad pulls
         comments = comments[~comments['key_change'].isin(self.bad_pulls)]
         comments['type'] = 'comment'
         return comments
 
     def itemize_users(self, events):
+        """
+        creates user2id map from events
+        """
         user_list = []
         if 'pulls' in events:
             pulls = events['pulls']
@@ -112,12 +159,21 @@ class StandardDataset(DatasetBase):
         self.users = ItemMap(user_list)
 
     def itemize_pulls(self, events):
+        """
+        creates pull2id map from events
+        """
         self.pulls = ItemMap(events['pulls']['key_change'])
 
     def itemize_files(self, events):
+        """
+        creates file2id map from events
+        """
         self.files = ItemMap(events['pulls']['file_path'].sum())
 
     def additional_preprocessing(self, events, data):
+        """
+        creates all item2id maps
+        """
         if self.user_items:
             self.itemize_users(events)
         if self.pull_items:
