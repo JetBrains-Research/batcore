@@ -4,6 +4,9 @@ from Counter.CounterBase import CounterBase
 
 
 class FaRCounter(CounterBase):
+    """
+    Files as risk metric = number of files that are known by one or zero active developers
+    """
     def __init__(self, data):
         self.when_known = defaultdict(lambda: {})
         self.when_left = defaultdict(lambda: None)
@@ -13,7 +16,9 @@ class FaRCounter(CounterBase):
         self.wkr = []
 
     def prepare(self):
-
+        """
+        supporting calculation for the faster metric estimation
+        """
         for i, review in self.data.pulls.iterrows():
             file = review.file_path
             reviewer = review.reviewer_login
@@ -49,6 +54,14 @@ class FaRCounter(CounterBase):
                 self.when_left[user] = max(self.when_left[user], commit['date'])
 
     def count(self, history, from_date=None, to_date=None):
+        """
+           :param history: data with reviews
+           :param from_date: start of the period on which CoreWorkload is calculated.
+                             If None starts from the start of history
+           :param to_date: end of the period on which CoreWorkload is calculated.
+                           If None ends at the end of history
+           :return: Expertise metrics
+        """
         if from_date is None:
             from_date = history[0]['date']
         if to_date is None:
