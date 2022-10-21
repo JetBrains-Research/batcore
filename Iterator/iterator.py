@@ -7,7 +7,7 @@ import numpy as np
 
 class IteratorBase(ABC):
     """
-    Data Iterator class that encapsulates all
+    Separate data Iterator class that encapsulates
     """
 
     def __init__(self, dataset):
@@ -26,6 +26,10 @@ class IteratorBase(ABC):
 
 
 class StreamIteratorBase(IteratorBase, ABC):
+    """
+    Iterator for time sorted events
+    """
+
     def __init__(self, dataset):
         super().__init__(dataset)
         self.data = dataset.data
@@ -35,6 +39,10 @@ class StreamIteratorBase(IteratorBase, ABC):
         return self
 
     def __next__(self):
+        """
+        Iterates over the data stream until index from get_next method
+        :return: a pair of train and test data
+        """
         if self.ind + 1 >= len(self.data):
             raise StopIteration
 
@@ -49,6 +57,9 @@ class StreamIteratorBase(IteratorBase, ABC):
 
     @abstractmethod
     def get_next(self):
+        """
+        :return: last index of the training point
+        """
         pass
 
     def replace(self, data, rev):
@@ -61,11 +72,18 @@ class StreamIteratorBase(IteratorBase, ABC):
 
 
 class StreamUntilIterator(StreamIteratorBase):
+    """
+    Stream iterator that iterates until next event of the certain type
+    """
+
     def __init__(self, dataset, until_type='pull'):
         super().__init__(dataset)
         self.until_type = until_type
 
     def get_next(self):
+        """
+        :return: index before the event with until_type
+        """
         try:
             while self.data[self.ind + 1]['type'] != self.until_type:
                 self.ind += 1
@@ -75,11 +93,19 @@ class StreamUntilIterator(StreamIteratorBase):
 
 
 class StreamAllIterator(StreamIteratorBase):
+    """
+    Stream iterator that iterates over each event
+    """
+
     def get_next(self):
         return self.ind
 
 
 class BatchStreamIterator(StreamIteratorBase):
+    """
+    Stream iterator that iterates until specified amount of events of the certain type are encountered
+    """
+
     def __init__(self, dataset, batch_size=10, until_type='pull'):
         super().__init__(dataset)
         self.until_type = until_type
