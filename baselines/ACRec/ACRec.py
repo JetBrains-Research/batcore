@@ -24,7 +24,7 @@ class ACRec(BanRecommenderBase):
                  inactive_time=60):
         """
         :param gamma: number of days to pass for a pull request to ignored during predictions
-        :param lambd:
+        :param lambd: time-decaying parameter
         :param no_owner: flag to add or remove owners of the pull request from the recommendations
         :param no_inactive: flag to add or remove inactive reviewers from recommendations
         :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
