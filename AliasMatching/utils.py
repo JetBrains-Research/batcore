@@ -8,15 +8,22 @@ from collections import defaultdict
 
 
 def remove_punctuation(name):
+    """
+    removes
+    """
     return name.translate(str.maketrans('', '', string.punctuation)).lower()
 
 
+# prefixes and titles to remove from name
 fixes = ['jr', 'sr', 'dr', 'mr', 'mrs']
 titles = ['admin', 'support']
 ban_words = fixes + titles
 
 
 def remove_ban_words(name):
+    """
+    removes banned words from name
+    """
     name_parts = []
     for p in name.split():
         if p not in ban_words:
@@ -25,31 +32,43 @@ def remove_ban_words(name):
 
 
 def name_preprocess(name):
+    """
+    removes punctuation and banned words from the name
+    """
     return remove_ban_words(remove_punctuation(name))
 
 
 def first_name(name):
+    """
+    returns first name
+    """
     if name == '':
         return name
     return name.split()[0]
 
 
 def last_name(name):
+    """
+    return last name
+    """
     if name == '':
         return ''
     return name.split()[-1]
 
 
 def shorten_email(email):
+    """
+    returns shorten form of the e-mail (everything before @)
+    """
     if email == '':
         return ''
     return email.split('@')[0]
 
 
 def get_norm_levdist(str1, str2):
-    #     str1 = str(str1)
-    #     str2 = str(str2)
-
+    """
+    Normalised Levenshtein distance between two strings
+    """
     ld = LevDist(str1, str2)
     ml = max(len(str1), len(str2))
     score = ld / ml
@@ -58,6 +77,9 @@ def get_norm_levdist(str1, str2):
 
 
 def name_email_dist(name, email):
+    """
+    checks if first and second name are in e-mail
+    """
     fn, ln = name
     if len(fn) > 1 and len(ln) > 1:
         if fn in email and ln in email:
@@ -72,6 +94,9 @@ def name_email_dist(name, email):
 
 
 def sim_users(u1, u2):
+    """
+    similarity of two users name based on their name and e-mail
+    """
     # s1
     #     return (u1, u2)
     full_name_score = get_norm_levdist(u1['name'], u2['name'])
@@ -110,6 +135,9 @@ def sim_users(u1, u2):
 
 
 def ban_users(x):
+    """
+    Filter function for non-human contributors
+    """
     if 'ci' in x['name'].split():
         return False
 
@@ -122,18 +150,21 @@ def ban_users(x):
     return True
 
 
-def get_score_func(i1, row1):
-    def score_func(i2, row2):
-        nonlocal i1, row1
-        if i1 > i1:
-            return sim_users(row1, row2)
-        if i1 == i2:
-            return 0
-
-    return score_func
+# def get_score_func(i1, row1):
+#     def score_func(i2, row2):
+#         nonlocal i1, row1
+#         if i1 > i1:
+#             return sim_users(row1, row2)
+#         if i1 == i2:
+#             return 0
+#
+#     return score_func
 
 
 def get_sim_matrix(users):
+    """
+    calculates name similarity matrix between users
+    """
     sim_matrix = np.zeros((len(users), len(users)))
     for i1, row1 in tqdm(users.iterrows()):
         def score(i2, row2):
@@ -157,6 +188,13 @@ def get_sim_matrix(users):
 
 
 def get_clusters(users, distance_threshold=0.1):
+    """
+    Adaptation of the approach from the 'Mining Email Social Networks'. Algorithm measures pair-wise similarity
+    between all participants and splits them into clusters with Agglomerative clustering.
+    :param users: dataframe with users names, e-mails, and logins
+    :param distance_threshold: distance parameter for clustering
+    :return: dict with provides cluster id for each user
+    """
     users = users.drop_duplicates().reset_index().drop('index', axis=1)
     users = users.fillna('')
     users.name = users.name.apply(name_preprocess)
@@ -170,7 +208,7 @@ def get_clusters(users, distance_threshold=0.1):
 
     sim_matrix = get_sim_matrix(users)
     agg = AgglomerativeClustering(n_clusters=None,
-                                  distance_threshold=0.1,
+                                  distance_threshold=distance_threshold,
                                   affinity='precomputed',
                                   linkage='complete').fit(sim_matrix)
     cl, cn = np.unique(agg.labels_, return_counts=True)
