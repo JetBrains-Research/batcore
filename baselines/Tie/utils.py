@@ -66,3 +66,21 @@ def get_all_words(reviews):
 
 def get_map(L):
     return {e: i for i, e in enumerate(L)}
+
+
+def pull_sim(pull1, pull2):
+    """
+    counts file path-based similarity for pull1 and pull2
+    """
+    changed_files1 = pull1["file_path"]
+    changed_files2 = pull2["file_path"]
+    if len(changed_files1) == 0 or len(changed_files2) == 0:
+        return 0
+    sum_score = 0
+    for f1 in changed_files1:
+        s1 = set(f1.split('/'))
+        for f2 in changed_files2:
+            s2 = set(f2.split('/'))
+            sum_score += (len(s1 & s2)) / max(len(s1), len(s2))
+    ret = sum_score / (len(changed_files1) * len(changed_files2) + 1)
+    return ret

@@ -77,7 +77,7 @@ class StandardDataset(DatasetBase):
         elif self.owner_policy == 'author_owner_fallback':
             pulls.owner = pulls.apply(lambda x: x.author if len(x.author) else x.owner, axis=1)
         else:
-            pulls.owner = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+            pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
 
         pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
         if self.remove_owners:

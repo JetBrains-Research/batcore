@@ -1,9 +1,11 @@
 # based on https://github.com/dezhen-k/icsme2015-paper-impl
-
+import copy
 from datetime import datetime, timedelta
 
-from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
-from baselines.Tie.utils import get_map
+import numpy as np
+
+from RecommenderBase.recommender import BanRecommenderBase
+from baselines.Tie.utils import get_map, pull_sim
 
 
 class Tie(BanRecommenderBase):
@@ -16,6 +18,7 @@ class Tie(BanRecommenderBase):
     Paper: "Who Should Review This Change? Putting Text and File Location Analyses Together for More Accurate
     Recommendations"
     """
+
     def __init__(self,
                  item_list,
                  text_splitter=lambda x: x.split(' '),
@@ -34,7 +37,7 @@ class Tie(BanRecommenderBase):
         :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
         """
         super().__init__(no_owner, no_inactive, inactive_time)
-        self.reviews = []
+        self.history = []
         self.word_list = item_list['word_list']
         self.word_map = get_map(item_list['word_list'])
 
@@ -54,17 +57,12 @@ class Tie(BanRecommenderBase):
         Recommends appropriate reviewers of the given review. This method returns `max_count` reviewers at most.
         :param n: number of candidates to return
         """
-        pull = self._transform_review_format(pull)
-        L = []
-        for j in range(len(self.reviewer_list)):
-            # c = (1 - self.alpha) * self._get_conf_text(review, j) \
-            #    + self.alpha * self._get_conf_path(review, j)
-            conf_text = self._get_conf_text(pull, j)
-            conf_path = self._get_conf_path(pull, j)
+        pull = self.update_pull(pull)
 
-            # L.append([j, conf_text, 0])
-            # L.append([j, 0, conf_path])
-            L.append([j, conf_text, conf_path])
+        bayes_scores = [self.bayes_score(pull, j) for j in range(len(self.reviewer_list))]
+        fps_scores = self.fps_score(pull)
+        L = [[j, bayes_scores[j], fps_scores[j]] for j in range(len(self.reviewer_list))]
+
         conf_text_sum = sum(map(lambda x: x[1], L))
         conf_path_sum = sum(map(lambda x: x[2], L))
         if conf_text_sum == 0:
@@ -75,126 +73,71 @@ class Tie(BanRecommenderBase):
             triple[1] /= conf_text_sum
             triple[2] /= conf_path_sum
 
-        # L.sort(key=lambda x: x[1] * self.alpha + x[2] * (1 - self.alpha), reverse=True)
-        # scores = [x[2] for x in L[:n]]
         scores = {self.reviewer_list[x[0]]: x[1] * self.alpha + x[2] * (1 - self.alpha) for x in L}
         self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
         return sorted_users[:n]
-        # L = list(
-        #     map(lambda x: self.reviewer_list[x],
-        #         map(lambda x: x[0], L)
-        #         )
-        # )
-        # return L[:n]
 
     def fit(self, data):
         """Updates the state of the model with an input review."""
         super().fit(data)
-        pull = data[0]
-        pull = self._transform_review_format(pull)
+        for event in data:
+            if event['type'] == 'pull':
+                pull = event
+                pull = self.update_pull(pull)
 
-        # if len(pull["body"]) == 0:
-        #     raise Exception("Cannot update.")
+                for reviewer_index in pull["reviewer_login"]:
+                    self.review_count_map[reviewer_index] = \
+                        self.review_count_map.get(reviewer_index, 0) + 1
+                    for word_index in pull["title"]:
+                        self.text_models[reviewer_index][word_index] = \
+                            self.text_models[reviewer_index].get(word_index, 0) + 1
 
-        for reviewer_index in pull["reviewer_login"]:
-            self.review_count_map[reviewer_index] = \
-                self.review_count_map.get(reviewer_index, 0) + 1
-            for word_index in pull["title"]:
-                self.text_models[reviewer_index][word_index] = \
-                    self.text_models[reviewer_index].get(word_index, 0) + 1
+                self.history.append(pull)
 
-        self.reviews.append(pull)
-
-    def _get_conf_path(self, review, reviewer_index):
-
-        s = 0
-        end_time = review["date"]
+    def fps_score(self, pull):
+        end_time = pull["date"]
         start_time = end_time - timedelta(days=self.max_date)
-        for old_rev in reversed(self.reviews):
-            if old_rev["date"] == end_time:
+        scores = np.zeros(len(self.reviewer_list))
+        for old_pull in reversed(self.history):
+            if old_pull["date"] == end_time:
                 continue
 
-            if old_rev["date"] < start_time:
+            if old_pull["date"] < start_time:
                 break
 
-            c = self._calc_similarity(old_rev, review)
-            for index in old_rev["reviewer_login"]:
-                if index == reviewer_index:
-                    s += c
-                    break
-        return s
+            c = pull_sim(old_pull, pull)
+            scores[old_pull['reviewer_login']] += c
 
-    def _get_conf_text(self, review, reviewer_index):
+        return scores
+
+    def bayes_score(self, pull, reviewer_index):
+        """
+        Assigns score for the :param pull: to the candidate :param reviewer_index: based on naive bayes classifier
+        """
         product = 1
         s = 0
         for _, v in self.text_models[reviewer_index].items():
             s += v
-        for word_index in review["title"]:
+        for word_index in pull["title"]:
             p = self.text_models[reviewer_index].get(word_index, 1e-9) / (s + 1)
             product *= p
-        return self.review_count_map.get(reviewer_index, 0) / len(self.reviews) * product
+        return self.review_count_map.get(reviewer_index, 0) / len(self.history) * product
 
-    def _calc_similarity(self, rev1, rev2):
-        key = str(rev1["id"]) + "-" + str(rev2["id"])
-        if key in self._similarity_cache:
-            return self._similarity_cache[key]
-        changed_files1 = rev1["file_path"][:500]
-        changed_files2 = rev2["file_path"][:500]
-        if len(changed_files1) == 0 or len(changed_files2) == 0:
-            return 0
-        sum_score = 0
-        for f1 in changed_files1:
-            s1 = set(f1.split('/'))
-            for f2 in changed_files2:
-                s2 = set(f2.split('/'))
-                sum_score += (len(s1 & s2)) / max(len(s1), len(s2))
-        ret = sum_score / (len(changed_files1) * len(changed_files2) + 1)
-        self._similarity_cache[key] = ret
-        return ret
+    def update_pull(self, pull):
+        """
+        turns title into bag of words vector and replaces reviewers with theri ids
+        """
+        pull = copy.deepcopy(pull)
 
-    def _transform_review_format(self, pull):
         word_indices = list(map(lambda x: self.word_map[x],
                                 filter(lambda x: x in self.word_map.keys(),
                                        self.text_splitter(pull["title"])
                                        )
                                 ))
         reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
-        return {
-            "title": word_indices,
-            "reviewer_login": reviewer_indices,
-            "id": pull["key_change"],
-            "date": pull["date"],
-            "file_path": pull["file_path"],
-            "owner": pull["owner"]
-        }
 
-    def _review_history_start_index(self, t):
-        i = 0
-        j = len(self.reviews) - 1
-        while i < j:
-            mid = (i + j) // 2
-            if self.reviews[mid]["date"] <= t:
-                i = mid + 1
-            else:
-                j = mid
+        pull['title'] = word_indices
+        pull['reviewer_login'] = reviewer_indices
 
-        if self.reviews[i]["date"] > t:
-            return i
-        else:
-            return -1
-
-    def _review_history_end_index(self, t):
-        i = 0
-        j = len(self.reviews) - 1
-        while i < j:
-            mid = (i + j + 1) // 2
-            if self.reviews[mid]["date"] < t:
-                i = mid
-            else:
-                j = mid - 1
-
-        if self.reviews[i]["date"] < t:
-            return i
-        else:
-            return -1
+        return pull

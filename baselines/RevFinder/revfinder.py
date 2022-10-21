@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -50,7 +51,7 @@ class RevFinder(BanRecommenderBase):
         """
         metrics = [LCP, LCSuff, LCSubstr, LCSubseq]
 
-        pull = self._transform_review_format(pull)
+        pull = self.update_pull(pull)
 
         rev_scores = [np.zeros(self.rev_count) for _ in metrics]
 
@@ -88,9 +89,6 @@ class RevFinder(BanRecommenderBase):
 
         scores = {self.reviewer_list[i]: s for i, s in enumerate(final_score)}
         self.filter(scores, pull)
-        # final_sorted_revs = np.argsort(final_score)
-        # return [self.reviewer_list[x] for x in final_sorted_revs[-n:][::-1]]
-
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
         return sorted_users[:n]
 
@@ -100,14 +98,14 @@ class RevFinder(BanRecommenderBase):
         """
         super().fit(data)
         pull = data[0]
-        self.history.append(self._transform_review_format(pull))
+        self.history.append(self.update_pull(pull))
 
-    def _transform_review_format(self, pull):
+    def update_pull(self, pull):
+        pull = copy.deepcopy(pull)
+
         reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
-        return {
-            "reviewer_login": np.array(reviewer_indices),
-            "id": pull["key_change"],
-            "date": pull["date"],
-            "file_path": [f.split('/') for f in pull["file_path"]],
-            "owner": pull['owner']
-        }
+
+        pull['reviewer_login'] = np.array(reviewer_indices)
+        pull['file_path'] = [f.split('/') for f in pull["file_path"]]
+
+        return pull
