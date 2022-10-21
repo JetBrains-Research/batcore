@@ -5,7 +5,7 @@ from Tester.TesterBase import TesterBase
 
 class SimulTester(TesterBase):
     """
-    Class for testing metrics on a simulated history
+    Class for testing non-recommendation metrics on a simulated history
     """
 
     def __init__(self):
