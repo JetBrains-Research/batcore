@@ -6,6 +6,7 @@ gerrit_csv
 github_raw
 apache_beam_2020-09-02
 test.py
-Android.json
-Counter.ipynb
+other_data/Android.json
+notebooks/Counter.ipynb
 review.openstack.org
+/other_data/
