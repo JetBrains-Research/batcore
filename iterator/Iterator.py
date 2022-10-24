@@ -21,9 +21,6 @@ class IteratorBase(ABC):
     def __next__(self):
         pass
 
-    def replace(self, data, cur_rec):
-        self.dataset.replace(data, cur_rec)
-
 
 class StreamIteratorBase(IteratorBase, ABC):
     """
@@ -32,7 +29,7 @@ class StreamIteratorBase(IteratorBase, ABC):
 
     def __init__(self, dataset):
         super().__init__(dataset)
-        self.data = dataset.data
+        self.data = deepcopy(dataset.data)
 
     def __iter__(self):
         self.ind = 0
@@ -62,13 +59,12 @@ class StreamIteratorBase(IteratorBase, ABC):
         """
         pass
 
-    def replace(self, data, rev):
-        data = deepcopy(data)
-        rev_name = self.dataset.get_revname()
-        l = len(data[rev_name])
-        data[rev_name][np.random.randint(l)] = rev
+    def replace(self, rev):
+        l = len(self.data[self.ind]['reviewer_login'])
+        self.data[self.ind]['reviewer_login'] = deepcopy(self.data[self.ind]['reviewer_login'])
+        self.data[self.ind]['reviewer_login'][np.random.randint(l)] = rev
 
-        return data
+        return self.data[self.ind]
 
 
 class StreamUntilIterator(StreamIteratorBase):
@@ -125,3 +121,6 @@ class BatchStreamIterator(StreamIteratorBase):
             return self.ind
         except IndexError:
             raise StopIteration
+
+    def replace(self, rev):
+        raise NotImplementedError()

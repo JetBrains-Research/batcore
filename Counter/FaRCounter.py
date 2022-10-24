@@ -7,53 +7,57 @@ class FaRCounter(CounterBase):
     """
     Files as risk metric = number of files that are known by one or zero active developers
     """
-    def __init__(self, data):
+
+    def __init__(self, iterator):
         self.when_known = defaultdict(lambda: {})
         self.when_left = defaultdict(lambda: None)
         self.when_created = defaultdict(lambda: None)
-        self.data = data
+
+        self.data = iterator.data
         self.prepare()
+
         self.wkr = []
 
     def prepare(self):
         """
         supporting calculation for the faster metric estimation
         """
-        for i, review in self.data.pulls.iterrows():
-            file = review.file_path
-            reviewer = review.reviewer_login
 
-            if reviewer not in self.when_left:
-                self.when_left[reviewer] = review['created_at']
-            else:
-                self.when_left[reviewer] = max(self.when_left[reviewer], review['created_at'])
+        for event in self.data:
+            if event['type'] == 'pull':
+                for file in event['file_path']:
+                    for reviewer in event['reviewer_login']:
+                        if reviewer not in self.when_left:
+                            self.when_left[reviewer] = event['date']
+                        else:
+                            self.when_left[reviewer] = max(self.when_left[reviewer], event['date'])
 
-            if file not in self.when_created:
-                self.when_created[file] = review['created_at']
-            else:
-                self.when_created[file] = min(self.when_created[file], review['created_at'])
+                        if file not in self.when_created:
+                            self.when_created[file] = event['date']
+                        else:
+                            self.when_created[file] = min(self.when_created[file], event['date'])
 
-        for i, commit in self.data.commits.iterrows():
-            file = commit.key_file
-            user = commit.key_user
+            elif event['type'] == 'commit' or event['type'] == 'comment':
+                file = event['key_file']
+                user = event['key_user']
 
-            if user not in self.when_known[file]:
-                self.when_known[file][user] = commit['date']
-            else:
-                prev = self.when_known[file][user]
-                self.when_known[file][user] = min(commit['date'], prev)
+                if user not in self.when_known[file]:
+                    self.when_known[file][user] = event['date']
+                else:
+                    prev = self.when_known[file][user]
+                    self.when_known[file][user] = min(event['date'], prev)
 
-            if file not in self.when_created:
-                self.when_created[file] = commit['date']
-            else:
-                self.when_created[file] = min(self.when_created[file], commit['date'])
+                if file not in self.when_created:
+                    self.when_created[file] = event['date']
+                else:
+                    self.when_created[file] = min(self.when_created[file], event['date'])
 
-            if user not in self.when_left:
-                self.when_left[user] = commit['date']
-            else:
-                self.when_left[user] = max(self.when_left[user], commit['date'])
+                if user not in self.when_left:
+                    self.when_left[user] = event['date']
+                else:
+                    self.when_left[user] = max(self.when_left[user], event['date'])
 
-    def count(self, history, from_date=None, to_date=None):
+    def __call__(self, history, from_date=None, to_date=None):
         """
            :param history: data with reviews
            :param from_date: start of the period on which CoreWorkload is calculated.
@@ -68,14 +72,14 @@ class FaRCounter(CounterBase):
             to_date = history[-1]['date']
 
         when_known_rev = defaultdict(lambda: {})
-        for review in history:
-            for file in review['file_path']:
-                for reviewer in review['reviewer_login']:
+        for pull in history:
+            for file in pull['file_path']:
+                for reviewer in pull['reviewer_login']:
                     if reviewer not in when_known_rev[file]:
-                        when_known_rev[file][reviewer] = review['date']
+                        when_known_rev[file][reviewer] = pull['date']
                     else:
                         prev = when_known_rev[file][reviewer]
-                        when_known_rev[file][reviewer] = min(review['date'], prev)
+                        when_known_rev[file][reviewer] = min(pull['date'], prev)
 
         active_dev = {}
         for file in self.when_created:
@@ -96,4 +100,4 @@ class FaRCounter(CounterBase):
 
         self.wkr.append(when_known_rev)
 
-        return far, active_dev
+        return far#, active_dev

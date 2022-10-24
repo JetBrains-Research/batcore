@@ -1,3 +1,7 @@
+from copy import deepcopy
+
+import numpy as np
+
 from dataset.DatasetBase import DatasetBase
 from dataset.utils import ItemMap
 
@@ -185,8 +189,12 @@ class StandardDataset(DatasetBase):
         if self.file_items:
             self.itemize_files(events)
 
-    def replace(self, data, cur_rec):
-        pass
+    def replace(self, data, rev):
+        data = deepcopy(data)
+        l = len(data['reviewer_list'])
+        data['reviewer_list'][np.random.randint(l)] = rev
+
+        return data
 
     def get_items2ids(self):
         ret = {}

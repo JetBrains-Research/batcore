@@ -1,5 +1,10 @@
+from copy import deepcopy
+
 from tqdm import tqdm
 
+from Counter.CoreWorkloadCounter import CoreWorkloadCounter
+from Counter.ExpertiseCounter import ExpertiseCounter
+from Counter.FaRCounter import FaRCounter
 from tester.TesterBase import TesterBase
 
 
@@ -21,13 +26,17 @@ class SimulTester(TesterBase):
         :param recommender: recommender to be tested. Must implement RecommenderBase interface
         :param data_iterator: iterator over dataset on which recommender will be tested. Must implement
                               IteratorBase interface
-        :param metrics: list of metrics that implement CounterBase interface
+        :param metrics: dict of metrics that implement CounterBase interface
         :return: list of calculated metrics
         """
 
+        if metrics is None:
+            metrics = {'Core Workload': CoreWorkloadCounter,
+                       'FaR': FaRCounter(data_iterator),
+                       'Expertise': ExpertiseCounter(data_iterator)}
         self.simulate(recommender, data_iterator)
 
-        result = [self.count_metric_dif(metric) for metric in metrics]
+        result = {metric_name: self.count_metric_dif(metrics[metric_name]) for metric_name in metrics}
 
         return result
 
@@ -41,20 +50,24 @@ class SimulTester(TesterBase):
         for i, (train_data, test_data) in tqdm(enumerate(dataset)):
             cnt += 1
             if i == 0:
-                recommender.fit(train_data)
-                self.simulated.append(train_data)
-                self.real.append(train_data)
+                for event in train_data:
+                    if event['type'] == 'pull':
+                        self.simulated.append(event)
+                        self.real.append(event)
 
-            cur_rec = recommender.predict(test_data, n=1)[0]
-            new_train_data = dataset.replace(test_data, cur_rec)
+            recommender.fit(train_data)
 
-            if i > 0:
-                self.simulated.append(new_train_data)
-                self.real.append(test_data)
-                recommender.fit(new_train_data)
+            cur_rec = recommender.predict(test_data, n=1)
+            self.real.append(deepcopy(test_data))
 
-            # if cnt > 1000:
-            #     break
+            if len(cur_rec):
+                simulated_pull = dataset.replace(cur_rec[0])
+                self.simulated.append(simulated_pull)
+            else:
+                self.simulated.append(test_data)
+
+            if cnt > 1000:
+                break
 
     def count_metric_dif(self, metric):
         """
@@ -62,7 +75,7 @@ class SimulTester(TesterBase):
         """
         original_metric = metric(self.real)
         simulated_metric = metric(self.simulated)
-
+        # print(original_metric, simulated_metric)
         dif = (simulated_metric / original_metric - 1) * 100
 
         return dif
