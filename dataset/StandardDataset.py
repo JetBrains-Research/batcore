@@ -1,12 +1,10 @@
-import numpy as np
-
-from Dataset.dataset import DatasetBase
-from Dataset.utils import ItemMap
+from dataset.DatasetBase import DatasetBase
+from dataset.utils import ItemMap
 
 
 class StandardDataset(DatasetBase):
     """
-    Dataset for most of the implemented models.
+    dataset for most of the implemented models.
     """
 
     def __init__(self,
@@ -18,7 +16,7 @@ class StandardDataset(DatasetBase):
                  file_items=False,
                  pull_items=False,
                  owner_policy=None,
-                 remove_owners=True
+                 remove=None
                  ):
         """
 
@@ -34,8 +32,11 @@ class StandardDataset(DatasetBase):
             * author - commit authors of the pull are treated as owners
             * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
             * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
-        :param remove_owners: if True owners of the pull request are removed from the reviewers list
+        :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
         """
+
+        if remove is None:
+            remove = ['owner', 'author']
 
         self.bad_pulls = None
         self.max_file = max_file
@@ -55,7 +56,7 @@ class StandardDataset(DatasetBase):
             self.pulls = None
 
         self.owner_policy = owner_policy
-        self.remove_owners = remove_owners
+        self.remove = remove
 
         super().__init__(dataset)
 
@@ -113,12 +114,14 @@ class StandardDataset(DatasetBase):
 
         pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
 
-        if self.remove_owners:
-            pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x['owner']],
-                                               axis=1)
+        if len(self.remove):
+            for col in self.remove:
+                pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x[col]],
+                                                   axis=1)
             pulls = pulls[pulls.reviewer_login.apply(lambda x: len(x) > 0)]
+
         # add label
-        pulls['type'] = 'pull'
+        pulls.loc[:, 'type'] = 'pull'
 
         return pulls
 
@@ -130,7 +133,7 @@ class StandardDataset(DatasetBase):
         commits = dataset.commits
         # remove commits to the bad pulls
         commits = commits[~commits['key_change'].isin(self.bad_pulls)]
-        commits['type'] = 'commit'
+        commits.loc[:, 'type'] = 'commit'
         return commits
 
     def get_comments(self, dataset):
@@ -141,7 +144,8 @@ class StandardDataset(DatasetBase):
         comments = dataset.comments
         # remove comments to the bad pulls
         comments = comments[~comments['key_change'].isin(self.bad_pulls)]
-        comments['type'] = 'comment'
+        # comments['type'] = 'comment'
+        comments.loc[:, 'type'] = 'comment'
         return comments
 
     def itemize_users(self, events):
@@ -151,7 +155,7 @@ class StandardDataset(DatasetBase):
         user_list = []
         if 'pulls' in events:
             pulls = events['pulls']
-            user_list += pulls['reviewer_login'].sum() + pulls['owner'].to_list()
+            user_list += pulls['reviewer_login'].sum() + pulls['owner'].sum()
         if 'comments' in events:
             user_list += events['comments']['key_user'].to_list()
         if 'commits' in events:

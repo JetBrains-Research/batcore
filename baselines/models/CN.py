@@ -63,7 +63,7 @@ class CN(BanRecommenderBase):
         recommends reviewers based on owner of the pull request
         """
 
-        owner = self.users.getid(pull['owner'])
+        owner = self.users.getid(pull['owner'][0])
 
         if len(self.w.getcol(owner).nonzero()[0]) > 0:
             recs = self.predict_pac(owner, n)
@@ -85,7 +85,7 @@ class CN(BanRecommenderBase):
             if event['type'] == 'pull':
                 if self.start_time is None:
                     self.start_time = event['date']
-                owner = event['owner']
+                owner = event['owner'][0]
                 pull = event['key_change']
                 self.pull_owner[pull] = self.users.getid(owner)
 

@@ -1,6 +1,6 @@
 from tqdm import tqdm
 
-from Tester.TesterBase import TesterBase
+from tester.TesterBase import TesterBase
 
 
 class SimulTester(TesterBase):

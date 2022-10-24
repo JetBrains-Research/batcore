@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import numpy as np
 
 from RecommenderBase.recommender import BanRecommenderBase
-from baselines.Tie.utils import get_map, pull_sim
+from ..utils import get_map, pull_sim
 
 
 class Tie(BanRecommenderBase):

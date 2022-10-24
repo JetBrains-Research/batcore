@@ -1,14 +1,15 @@
 import pandas as pd
 from tqdm import tqdm
 
-from Tester.TesterBase import TesterBase
-from utils import count_metrics
+from tester.TesterBase import TesterBase
+from Metrics.metrics import count_metrics
 
 
-class Tester(TesterBase):
+class RecTester(TesterBase):
     """
-    Tester for the standard recommendations metrics
+    tester for the standard recommendations metrics
     """
+
     def test_recommender(self,
                          recommender,
                          data_iterator,
@@ -34,10 +35,10 @@ class Tester(TesterBase):
                 y_pred = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer_login']]]
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev'])
                 self.recs.append(y_pred)
-            if cnt > 200:
+            if cnt > 5:
                 break
         # print(cnt)
 
         recs = pd.concat(self.recs, axis=0)
 
-        return count_metrics(recs), recs
+        return count_metrics(recs, None, top_ns), recs

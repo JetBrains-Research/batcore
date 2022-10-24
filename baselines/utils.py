@@ -1,3 +1,66 @@
+def get_map(L):
+    return {e: i for i, e in enumerate(L)}
+
+
+def pull_sim(pull1, pull2):
+    """
+    counts file path-based similarity for pull1 and pull2
+    """
+    changed_files1 = pull1["file_path"]
+    changed_files2 = pull2["file_path"]
+    if len(changed_files1) == 0 or len(changed_files2) == 0:
+        return 0
+    sum_score = 0
+    for f1 in changed_files1:
+        s1 = set(f1.split('/'))
+        for f2 in changed_files2:
+            s2 = set(f2.split('/'))
+            sum_score += (len(s1 & s2)) / max(len(s1), len(s2))
+    ret = sum_score / (len(changed_files1) * len(changed_files2) + 1)
+    return ret
+
+
+def camel_split(path):
+    """
+    :param path: file path
+    :return: tokens from path split by '/' and camel case
+    """
+    tokens = []
+    cur_token = ""
+    for c in path:
+        if c == '/':
+            tokens.append(cur_token)
+            cur_token = ""
+        elif c.isupper():
+            tokens.append(cur_token)
+            cur_token = c
+        else:
+            cur_token += c
+    return tokens
+
+
+def sim(f1, f2):
+    """
+    :param f1: file path1
+    :param f2: file path2
+    :return: similarity measure between files
+    """
+    t1 = set(camel_split(f1))
+    t2 = set(camel_split(f2))
+    return len(t1.intersection(t2)) / len(t1.union(t2))
+
+
+def norm(p):
+    """
+    :param p: list of scores
+    :return: min-max score normalizarion
+    """
+    p -= p.min()
+    if p.max() == 0:
+        return p
+    return p / p.max()
+
+
 # from https://github.com/patanamon/revfinder
 
 #########################################################################

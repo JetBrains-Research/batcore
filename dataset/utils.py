@@ -1,3 +1,47 @@
+class ItemMap:
+    def __init__(self, data=None):
+        if data is None:
+            self.id2item = []
+            self.item2id = {}
+        else:
+            self.id2item = list(dict.fromkeys(data))
+            self.item2id = {item: i for (i, item) in enumerate(self.id2item)}
+
+    def __getitem__(self, i):
+        return self.id2item[i]
+
+    def getid(self, item):
+        return self.item2id[item]
+
+    def __len__(self):
+        return len(self.id2item)
+
+    def add(self, val):
+        self.id2item.append(val)
+        self.item2id[val] = len(self.id2item) - 1
+
+    def add2(self, val):
+        if val not in self.item2id:
+            self.add(val)
+
+
+def time_interval(col, from_date, to_date):
+    """
+    :return: column with rows which lies within [from_data; to_date]
+    """
+    return (col >= from_date) & (col <= to_date)
+
+
+def user_id_split(user_id):
+    """
+    :return: split user_id into email, name, and login
+    """
+    id_parts = user_id.split(':')
+    fp = ':'.join(id_parts[:-1])
+    sp = id_parts[-1]
+    return fp, sp, user_id
+
+
 import re
 
 from nltk import LancasterStemmer
@@ -62,25 +106,3 @@ def get_all_words(reviews):
             s.add(w)
     l = list(s)
     return l
-
-
-def get_map(L):
-    return {e: i for i, e in enumerate(L)}
-
-
-def pull_sim(pull1, pull2):
-    """
-    counts file path-based similarity for pull1 and pull2
-    """
-    changed_files1 = pull1["file_path"]
-    changed_files2 = pull2["file_path"]
-    if len(changed_files1) == 0 or len(changed_files2) == 0:
-        return 0
-    sum_score = 0
-    for f1 in changed_files1:
-        s1 = set(f1.split('/'))
-        for f2 in changed_files2:
-            s2 = set(f2.split('/'))
-            sum_score += (len(s1 & s2)) / max(len(s1), len(s2))
-    ret = sum_score / (len(changed_files1) * len(changed_files2) + 1)
-    return ret

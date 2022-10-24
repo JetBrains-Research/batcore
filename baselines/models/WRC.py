@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy as np
 
 from RecommenderBase.recommender import BanRecommenderBase
-from baselines.WRC.utils import LCP
+from ..utils import LCP, path2list
 
 
 class WRC(BanRecommenderBase):
@@ -15,6 +15,7 @@ class WRC(BanRecommenderBase):
 
     Paper : "Automatically Recommending Code Reviewers Based on Their Expertise: An Empirical Comparison"
     """
+
     def __init__(self,
                  items2ids,
                  delta=1,
@@ -53,7 +54,7 @@ class WRC(BanRecommenderBase):
                 for i in range(self.wrc.shape[1]):
                     val = self.wrc[self.files.getid(f2), i]
                     if val >= 0:
-                        scores[self.users[i]] += val * LCP(f1, f2)
+                        scores[self.users[i]] += val * LCP(path2list(f1), path2list(f2))
 
         self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])

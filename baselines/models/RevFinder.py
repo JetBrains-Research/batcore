@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 import numpy as np
 
 from RecommenderBase.recommender import BanRecommenderBase
-from baselines.RevFinder.utils import LCSubseq, LCSubstr, LCSuff, LCP
-from baselines.Tie.utils import get_map
+from ..utils import LCSubseq, LCSubstr, LCSuff, LCP
+from ..utils import get_map
 
 
 # TODO update

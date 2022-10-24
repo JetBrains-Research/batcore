@@ -7,7 +7,7 @@ import numpy as np
 
 class IteratorBase(ABC):
     """
-    Separate data Iterator class that encapsulates
+    Separate data iterator class that encapsulates
     """
 
     def __init__(self, dataset):
@@ -27,7 +27,7 @@ class IteratorBase(ABC):
 
 class StreamIteratorBase(IteratorBase, ABC):
     """
-    Iterator for time sorted events
+    iterator for time sorted events
     """
 
     def __init__(self, dataset):

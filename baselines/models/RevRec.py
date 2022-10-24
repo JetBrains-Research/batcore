@@ -5,7 +5,7 @@ import numpy as np
 from scipy.sparse import dok_matrix
 
 from RecommenderBase.recommender import BanRecommenderBase
-from baselines.RevRec.utils import norm, sim
+from ..utils import norm, sim
 
 
 class RevRec(BanRecommenderBase):
