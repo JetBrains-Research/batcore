@@ -35,8 +35,8 @@ class RecTester(TesterBase):
                 y_pred = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer_login']]]
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev'])
                 self.recs.append(y_pred)
-            if cnt > 5:
-                break
+            # if cnt > 5:
+            #     break
         # print(cnt)
 
         recs = pd.concat(self.recs, axis=0)

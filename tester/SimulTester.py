@@ -66,8 +66,8 @@ class SimulTester(TesterBase):
             else:
                 self.simulated.append(test_data)
 
-            if cnt > 1000:
-                break
+            # if cnt > 1000:
+            #     break
 
     def count_metric_dif(self, metric):
         """
