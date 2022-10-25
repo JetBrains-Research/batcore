@@ -97,8 +97,9 @@ class RevFinder(BanRecommenderBase):
         adds reviews into a history buffer
         """
         super().fit(data)
-        pull = data[0]
-        self.history.append(self.update_pull(pull))
+        for event in data:
+            if event['type'] == 'pull':
+                self.history.append(self.update_pull(event))
 
     def update_pull(self, pull):
         pull = copy.deepcopy(pull)

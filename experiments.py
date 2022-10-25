@@ -62,14 +62,13 @@ def test_project_metrics(models_cls, path=None, data_args=None, filter_args=None
         dataset_kwargs.update(data_args)
 
         dataset = dataset_classes[setup['dataset']](data, **dataset_kwargs)
-        data_iterator = iterator_classes[setup['iterator']](dataset, **setup['iterator_kwargs'])
+        data_iterator = StreamUntilIterator(dataset)
 
         model_kwargs = deepcopy(setup['model_kwargs'])
         model_kwargs.update(filter_args)
 
-
         if setup['item2id']:
-            model = mdl_cls(dataset.get_items2ids, **model_kwargs)
+            model = mdl_cls(dataset.get_items2ids(), **model_kwargs)
         else:
             model = mdl_cls(**model_kwargs)
 
@@ -80,5 +79,15 @@ def test_project_metrics(models_cls, path=None, data_args=None, filter_args=None
 
 
 if __name__ == '__main__':
-    models = [ACRec]
-    test_project_metrics(models, 'results/openstack_project_metrics_check')
+    models = [
+        # ACRec,
+        # cHRev,
+        # CN,
+        # xFinder,
+        # Tie,
+
+        # RevRec,
+        # RevFinder,
+        WRC,
+    ]
+    test_project_metrics(models, 'results/openstack_project_metrics.json', data_args={'commits': True})

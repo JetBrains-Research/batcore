@@ -49,14 +49,15 @@ from nltk import LancasterStemmer
 stemmer = LancasterStemmer()
 
 
-def get_all_reviewers(reviews):
+def get_all_reviewers(events):
     """
     collects all possible reviewers
     """
     reviewer_set = set()
-    for review in reviews:
-        for reviewer in review["reviewer_login"]:
-            reviewer_set.add(reviewer)
+    for event in events:
+        if event['type'] == 'pull':
+            for reviewer in event["reviewer_login"]:
+                reviewer_set.add(reviewer)
     return list(reviewer_set)
 
 
@@ -96,13 +97,14 @@ def split_text(txt):
     return splitted_words
 
 
-def get_all_words(reviews):
+def get_all_words(events):
     """
     gets list all possible words in reviews
     """
     s = set()
-    for review in reviews:
-        for w in split_text(review["title"]):
-            s.add(w)
+    for event in events:
+        if event['type'] == 'pull':
+            for w in split_text(event["title"]):
+                s.add(w)
     l = list(s)
     return l

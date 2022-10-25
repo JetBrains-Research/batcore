@@ -57,7 +57,7 @@ class SimulTester(TesterBase):
 
             recommender.fit(train_data)
 
-            cur_rec = recommender.predict(test_data, n=1)
+            cur_rec = recommender.predict(test_data, n=5)
             self.real.append(deepcopy(test_data))
 
             if len(cur_rec):
@@ -66,8 +66,8 @@ class SimulTester(TesterBase):
             else:
                 self.simulated.append(test_data)
 
-            # if cnt > 1000:
-            #     break
+            if cnt > 200:
+                break
 
     def count_metric_dif(self, metric):
         """

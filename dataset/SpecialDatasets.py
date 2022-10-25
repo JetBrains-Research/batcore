@@ -26,6 +26,10 @@ class RevRecDataset(StandardDataset):
 
         for user in pd.unique(events['comments']['key_user']):
             self.users.add2(user)
+        #
+        # if 'commits' in events:
+        #     for user in pd.unique(events['commits']['key_user']):
+        #         self.users.add2(user)
 
 
 class TieDataset(StandardDataset):

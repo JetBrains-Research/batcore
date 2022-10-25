@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import chain
 
 from Counter.CounterBase import CounterBase
 
@@ -10,8 +11,8 @@ class FaRCounter(CounterBase):
 
     def __init__(self, iterator):
         self.when_known = defaultdict(lambda: {})
-        self.when_left = defaultdict(lambda: None)
-        self.when_created = defaultdict(lambda: None)
+        self.when_left = {}
+        self.when_created = {}
 
         self.data = iterator.data
         self.prepare()
@@ -25,17 +26,18 @@ class FaRCounter(CounterBase):
 
         for event in self.data:
             if event['type'] == 'pull':
-                for file in event['file_path']:
-                    for reviewer in event['reviewer_login']:
-                        if reviewer not in self.when_left:
-                            self.when_left[reviewer] = event['date']
-                        else:
-                            self.when_left[reviewer] = max(self.when_left[reviewer], event['date'])
+                for user in chain(event['reviewer_login'], event['owner']):
+                    if user not in self.when_left:
+                        self.when_left[user] = event['date']
+                    else:
+                        self.when_left[user] = max(self.when_left[user], event['date'])
 
-                        if file not in self.when_created:
-                            self.when_created[file] = event['date']
-                        else:
-                            self.when_created[file] = min(self.when_created[file], event['date'])
+                for file in event['file_path']:
+                    if file not in self.when_created:
+                        self.when_created[file] = event['date']
+                    else:
+                        self.when_created[file] = min(self.when_created[file], event['date'])
+
 
             elif event['type'] == 'commit' or event['type'] == 'comment':
                 file = event['key_file']
@@ -92,12 +94,16 @@ class FaRCounter(CounterBase):
                     active_dev[file].add(user)
 
             for user in when_known_rev[file]:
-                if self.when_left[user] >= to_date > when_known_rev[file][user]:
-                    active_dev[file].add(user)
+                try:
+                    if self.when_left[user] >= to_date > when_known_rev[file][user]:
+                        active_dev[file].add(user)
+                except Exception as e:
+                    print(file, user)
+                    raise e
 
         active_dev = {file: len(active_dev[file]) for file in active_dev}
         far = len([file for file in active_dev if active_dev[file] <= 1])
 
         self.wkr.append(when_known_rev)
 
-        return far#, active_dev
+        return far  # , active_dev

@@ -122,7 +122,7 @@ class Tie(BanRecommenderBase):
         for word_index in pull["title"]:
             p = self.text_models[reviewer_index].get(word_index, 1e-9) / (s + 1)
             product *= p
-        return self.review_count_map.get(reviewer_index, 0) / len(self.history) * product
+        return self.review_count_map.get(reviewer_index, 0) / (len(self.history) + 1e-8) * product
 
     def update_pull(self, pull):
         """

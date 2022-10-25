@@ -86,7 +86,7 @@ class StandardDataset(DatasetBase):
         data = sorted(data, key=lambda x: x['date'])
 
         self.additional_preprocessing(events, data)
-
+        self.events = events
         return data
 
     def get_pulls(self, dataset):

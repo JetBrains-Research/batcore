@@ -182,6 +182,8 @@ class RevRec(BanRecommenderBase):
         # calculation of the candidate expertise based on the file path similarities of the changed files with
         # previously commented files
 
+        if self.active_revs == 0:
+            return []
         scores_re = defaultdict(lambda: 0)
 
         cf = defaultdict(lambda: 0)
@@ -255,3 +257,23 @@ class RevRec(BanRecommenderBase):
                         self.rc_graph[user_id, owner_id] += 1
 
         self.end_date = data[-1]['date']
+
+    def update_time(self, events):
+        """
+        for all the participants in each event updates time of most recent action
+        :param events: batch of events
+        """
+        for event in events:
+            if event['type'] == 'pull':
+                date = event['date']
+                try:
+                    for owner in event['owner']:
+                        self.last_active[owner] = date
+                except KeyError:
+                    pass
+                for reviewer in event['reviewer_login']:
+                    self.last_active[reviewer] = date
+            elif event['type'] == 'comment':
+                date = event['date']
+                user = event['key_user']
+                self.last_active[user] = date

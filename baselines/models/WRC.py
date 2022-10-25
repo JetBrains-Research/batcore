@@ -67,11 +67,12 @@ class WRC(BanRecommenderBase):
         """
         if self.no_inactive:
             self.update_time(data)
-        for review in data:
-            self.reviews.append(review)
-            self.wrc = self.delta * self.wrc
+        for event in data:
+            if event['type'] == 'pull':
+                self.reviews.append(event)
+                self.wrc = self.delta * self.wrc
 
-            for file in review['file_path']:
-                self.known_files.add(file)
-                for user in review['reviewer_login']:
-                    self.wrc[self.files.getid(file), self.users.getid(user)] += 1 / len(review['reviewer_login'])
+                for file in event['file_path']:
+                    self.known_files.add(file)
+                    for user in event['reviewer_login']:
+                        self.wrc[self.files.getid(file), self.users.getid(user)] += 1 / len(event['reviewer_login'])
