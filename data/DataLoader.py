@@ -5,7 +5,7 @@ from datetime import timedelta
 import numpy as np
 
 
-class IteratorBase(ABC):
+class LoaderBase(ABC):
     """
     Separate data iterator class that encapsulates
     """
@@ -22,7 +22,7 @@ class IteratorBase(ABC):
         pass
 
 
-class StreamIteratorBase(IteratorBase, ABC):
+class StreamLoaderBase(LoaderBase, ABC):
     """
     iterator for time sorted events
     """
@@ -67,7 +67,39 @@ class StreamIteratorBase(IteratorBase, ABC):
         return self.data[self.ind]
 
 
-class StreamUntilIterator(StreamIteratorBase):
+class StreamDataLoader(StreamLoaderBase):
+    """
+        Stream iterator that iterates until specified amount of events of the certain type are encountered
+    """
+
+    def __init__(self, dataset, batch_size=1, until_type='pull'):
+        super().__init__(dataset)
+        self.until_type = until_type
+        self.bs = batch_size
+
+    def get_next(self):
+        if self.ind + 1 >= len(self.data):
+            raise StopIteration
+        og = self.ind
+        try:
+            cnt = 0
+            while cnt < self.bs:
+                self.ind += 1
+                while self.data[self.ind + 1]['type'] != self.until_type:
+                    self.ind += 1
+                cnt += 1
+            return self.ind
+        except IndexError:
+            raise StopIteration
+
+    def replace(self, rev):
+        if self.bs != 1:
+            raise NotImplementedError
+        else:
+            return super().replace(rev)
+
+
+class StreamUntilLoader(StreamLoaderBase):
     """
     Stream iterator that iterates until next event of the certain type
     """
@@ -88,7 +120,7 @@ class StreamUntilIterator(StreamIteratorBase):
             raise StopIteration
 
 
-class StreamAllIterator(StreamIteratorBase):
+class StreamAllLoader(StreamLoaderBase):
     """
     Stream iterator that iterates over each event
     """
@@ -97,7 +129,7 @@ class StreamAllIterator(StreamIteratorBase):
         return self.ind
 
 
-class BatchStreamIterator(StreamIteratorBase):
+class BatchStreamLoader(StreamLoaderBase):
     """
     Stream iterator that iterates until specified amount of events of the certain type are encountered
     """

@@ -25,10 +25,22 @@ class ItemMap:
             self.add(val)
 
 
+import re
+
+
+from nltk import LancasterStemmer
+
+stemmer = LancasterStemmer()
+
+
 def time_interval(col, from_date, to_date):
     """
     :return: column with rows which lies within [from_data; to_date]
     """
+    if from_date is None:
+        from_date = col.min()
+    if to_date is None:
+        to_date = col.max()
     return (col >= from_date) & (col <= to_date)
 
 
@@ -40,13 +52,6 @@ def user_id_split(user_id):
     fp = ':'.join(id_parts[:-1])
     sp = id_parts[-1]
     return fp, sp, user_id
-
-
-import re
-
-from nltk import LancasterStemmer
-
-stemmer = LancasterStemmer()
 
 
 def get_all_reviewers(events):

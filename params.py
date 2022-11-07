@@ -1,5 +1,5 @@
-from dataset import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
-from iterator import BatchStreamIterator, StreamUntilIterator
+from data import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
+from iterator import BatchStreamLoader, StreamUntilLoader
 
 model_setup = {
     'ACRec': {'item2id': False,
@@ -58,5 +58,5 @@ dataset_classes = {'standard': StandardDataset,
                    'revfinder': RevFinderDataset,
                    'revrec': RevRecDataset}
 
-iterator_classes = {'batch': BatchStreamIterator,
-                    'full': StreamUntilIterator}
+iterator_classes = {'batch': BatchStreamLoader,
+                    'full': StreamUntilLoader}

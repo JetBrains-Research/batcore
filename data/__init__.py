@@ -2,6 +2,8 @@ from .DatasetBase import DatasetBase
 from .GerritLoader import GerritLoader
 from .SpecialDatasets import RevRecDataset, RevFinderDataset, TieDataset
 from .StandardDataset import StandardDataset
+from .DataLoader import *
+from .aggregators import *
 
 __all__ = [
     "DatasetBase",
@@ -9,5 +11,11 @@ __all__ = [
     "RevRecDataset",
     "RevFinderDataset",
     "TieDataset",
-    "StandardDataset"
+    "StandardDataset",
+    "LoaderBase",
+    "StreamLoaderBase",
+    "StreamUntilLoader",
+    "StreamAllLoader",
+    "BatchStreamLoader",
+    "get_gerrit_dataset"
 ]

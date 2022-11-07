@@ -1,6 +1,6 @@
 import pandas as pd
 
-from dataset.StandardDataset import StandardDataset
+from data.StandardDataset import StandardDataset
 from .utils import ItemMap
 from .utils import get_all_reviewers, get_all_words
 

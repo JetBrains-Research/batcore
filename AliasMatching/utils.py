@@ -9,7 +9,7 @@ from collections import defaultdict
 
 def remove_punctuation(name):
     """
-    removes
+    removes punctuation
     """
     return name.translate(str.maketrans('', '', string.punctuation)).lower()
 
@@ -142,6 +142,9 @@ def ban_users(x):
         return False
 
     if 'bot' in x['name'].split():
+        return False
+
+    if 'qt' in x['name'].split():
         return False
 
     if x['name'] in ['jenkins', 'zuul', 'welcome new contributor']:

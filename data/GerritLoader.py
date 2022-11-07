@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from AliasMatching.utils import get_clusters
-from dataset.utils import time_interval, user_id_split
+from data.utils import time_interval, user_id_split
 
 
 class GerritLoader:
@@ -186,15 +186,20 @@ class GerritLoader:
 
         # removes unnecessary columns and renames some of them
         self.pulls = self.pulls[
-            ['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment', 'status']].rename(
-            {'created_at': 'date', 'comment': 'title'}, axis=1)
+            ['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment', 'status',
+             'updated_at']].rename(
+            {'created_at': 'date', 'comment': 'title', 'updated_at': 'closed'}, axis=1)
 
         # group entries by pulls and aggregates reviewers
         self.pulls = self.pulls.groupby('key_change')[
-            ['file_path', 'reviewer_login', 'date', 'owner', 'title', 'status']].agg(
-            {'file_path': lambda x: list(set(x)), 'reviewer_login': lambda x: list(set(x)),
-             'date': lambda x: list(x)[0], 'owner': lambda x: list(x)[0],
-             'title': lambda x: list(x)[0], 'status': lambda x: list(x)[0]}).reset_index()
+            ['file_path', 'reviewer_login', 'date', 'owner', 'title', 'status', 'closed']].agg(
+            {'file_path': lambda x: list(set(x)),
+             'reviewer_login': lambda x: list(set(x)),
+             'date': lambda x: list(x)[0],
+             'owner': lambda x: list(x)[0],
+             'title': lambda x: list(x)[0],
+             'status': lambda x: list(x)[0],
+             'closed': lambda x: list(x)[0]}).reset_index()
 
         # get contributor for each of the pull from the commits and add them to the pulls
         pull_authors = self.commits.groupby('key_change').agg({'key_user': lambda x: set(x)}).reset_index()

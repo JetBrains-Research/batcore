@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import numpy as np
 
-from dataset.DatasetBase import DatasetBase
-from dataset.utils import ItemMap
+from data.DatasetBase import DatasetBase
+from data.utils import ItemMap
 
 
 class StandardDataset(DatasetBase):
@@ -19,8 +19,8 @@ class StandardDataset(DatasetBase):
                  user_items=False,
                  file_items=False,
                  pull_items=False,
-                 owner_policy=None,
-                 remove=None
+                 owner_policy='none',
+                 remove='none'
                  ):
         """
 
@@ -39,7 +39,7 @@ class StandardDataset(DatasetBase):
         :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
         """
 
-        if remove is None:
+        if remove == 'none':
             remove = ['owner', 'author']
 
         self.bad_pulls = None
@@ -113,8 +113,10 @@ class StandardDataset(DatasetBase):
             pulls = pulls.dropna()
         elif self.owner_policy == 'author_owner_fallback':
             pulls.owner = pulls.apply(lambda x: x.author if len(x.author) else x.owner, axis=1)
-        else:
+        elif self.owner_policy == 'none':
             pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
+        else:
+            raise ValueError(f'Wrong owner_policy {self.owner_policy}')
 
         pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
 

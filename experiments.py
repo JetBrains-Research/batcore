@@ -4,7 +4,7 @@ from Counter.CoreWorkloadCounter import CoreWorkloadCounter
 from Counter.ExpertiseCounter import ExpertiseCounter
 from Counter.FaRCounter import FaRCounter
 from baselines import *
-from dataset import *
+from data import *
 from tester import RecTester, SimulTester
 from utils import save_results
 from params import *
@@ -31,7 +31,7 @@ def test_recommendation_metrics(models_cls, path=None, data_args=None, filter_ar
         setup = model_setup[mdl_cls.__name__]
         dataset_kwargs = setup['dataset_kwargs'].update(data_args)
 
-        dataset = dataset_classes[setup['dataset']](data, **dataset_kwargs)
+        dataset = dataset_classes[setup['data']](data, **dataset_kwargs)
         data_iterator = iterator_classes[setup['iterator']](**setup['iterator_args'])
 
         model_kwargs = setup['model_kwargs'].update(filter_args)
@@ -61,8 +61,8 @@ def test_project_metrics(models_cls, path=None, data_args=None, filter_args=None
         dataset_kwargs = deepcopy(setup['dataset_kwargs'])
         dataset_kwargs.update(data_args)
 
-        dataset = dataset_classes[setup['dataset']](data, **dataset_kwargs)
-        data_iterator = StreamUntilIterator(dataset)
+        dataset = dataset_classes[setup['data']](data, **dataset_kwargs)
+        data_iterator = StreamUntilLoader(dataset)
 
         model_kwargs = deepcopy(setup['model_kwargs'])
         model_kwargs.update(filter_args)
