@@ -37,7 +37,7 @@ class GerritLoader:
             self.pulls.file_path = self.pulls.file_path.apply(ast.literal_eval)
             self.pulls.reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval).apply(
                 lambda x: [int(i) for i in x])
-            self.pulls.owner = self.pulls.owner.apply(lambda x: [int(x)])
+            self.pulls.owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
             self.pulls.author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else []).apply(
                 lambda x: [int(i) for i in x])
 
@@ -51,13 +51,9 @@ class GerritLoader:
             self.to_date = to_date
 
             data = GerritLoader.get_df(path)
-            print('loaded')
             self.pulls, self.commits, self.comments = self.prepare(data)
-            print('prep1')
             self.prepare_users(remove_bots, bots, factorize_users, alias, project_name)
-            print('prepusers')
             self.prepare_pulls()
-            print('preppulls')
 
     @staticmethod
     def get_df(path):
@@ -261,7 +257,7 @@ class GerritLoader:
             {'file_path': lambda x: list(set(x)),
              'reviewer_login': lambda x: list(set(x)),
              'date': lambda x: list(x)[0],
-             'owner': lambda x: list(x)[0],
+             'owner': lambda x: list(set(x)),
              'title': lambda x: list(x)[0],
              'status': lambda x: list(x)[0],
              'closed': lambda x: list(x)[0]}).reset_index()
@@ -270,6 +266,9 @@ class GerritLoader:
         pull_authors = self.commits.groupby('key_change').agg({'key_user': lambda x: set(x)}).reset_index()
         pull_authors = pull_authors.rename({'key_user': 'author'}, axis=1)
         self.pulls = self.pulls.merge(pull_authors, on='key_change', how='left')
+
+        self.pulls.author = self.pulls.author.apply(lambda x: x if x is not np.nan else []).apply(
+            lambda x: [int(i) for i in x])
 
     def to_checkpoint(self, path):
         """
