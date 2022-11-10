@@ -164,14 +164,12 @@ def get_sim_matrix(users):
     return sim_matrix
 
 
-def get_clusters(users, distance_threshold=0.1, project='', bot_users=None):
+def get_clusters(users, distance_threshold=0.1):
     """
     Adaptation of the approach from the 'Mining Email Social Networks'. Algorithm measures pair-wise similarity
     between all participants and splits them into clusters with Agglomerative clustering.
-    :param bot_users: list of bots, if None bots will be detected automatically
     :param users: dataframe with users names, e-mails, and logins
     :param distance_threshold: distance parameter for clustering
-    :param project: name of the project for bot identification
     :return: dict with provides cluster id for each user
     """
     users = users.drop_duplicates().reset_index().drop('index', axis=1)

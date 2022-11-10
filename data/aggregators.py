@@ -48,7 +48,8 @@ def get_gerrit_dataset(
         * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
         * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
     :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
-    :param model_cls:
+    :param model_cls: class implementing RecommenderBase interface or None. When class is specified suitable Dataset
+    will be returned
     """
     kwargs = {'max_file': max_file,
               'commits': commits,

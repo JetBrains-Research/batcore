@@ -17,5 +17,6 @@ __all__ = [
     "StreamUntilLoader",
     "StreamAllLoader",
     "BatchStreamLoader",
-    "get_gerrit_dataset"
+    "get_gerrit_dataset",
+    'StreamDataLoader'
 ]
