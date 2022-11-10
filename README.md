@@ -1,45 +1,41 @@
-# rrr/rrr
+# Bat CoRe: Baselines and testing framework for code reviewer recommendations
 
-
-
-## Getting Started
-
-Download links:
-
-SSH clone URL: ssh://git@git.jetbrains.team/rrr/framework.git
-
-HTTPS clone URL: https://git.jetbrains.team/rrr/framework.git
-
-
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
-
-## Prerequisites
-
-What things you need to install the software and how to install them.
-
-```
-Examples
-```
 
 
 ## Framework
-This repository provides a framework for testing code review recommendation algorithms. Our framework can be split into 4 main parts: TesterBase, RecommenderBase, DatasetBase and data IteratorBase.
+This repository provides a framework for testing code review recommendation algorithms.
 
-* **TesterBase** is class that has `test_recommender` method. This method takes `RecommenderBase` and `IteratorBase` and iterates over the dataset to performs any calculates outputs of the recommender and desirable metrics.
-  * We provide two different ready-to-use TesterBase implementation: a tester that calculates standard recommender metrics (e.g. accuracy, mrr) and tester for project-based metrics on a simulated history (*Mirsaeedi, Rigby, 2020*).
-  * Metrics for the simulated testing can be found in `Counter`.
+
+### Model creation
 * **RecommenderBase** is a simple interface for a generic recommender algorithm. It has a `fit` method that trains model on a given data and a `predict` method that predicts reviewers for the given pulls.
+* **BanRecommenderBase** is an in interface derived from RecommenderBase that implements by candidate filtering by their activity and ownership of the pull request
+
+### Dataset creation
+
 * **DatasetBase** is an interface that encapsulates any preprocessing needed for the dataset with a method `preprocess`. 
-  * Additionally, we provide classes for gathering data of github and gerrit projects that are mined with our tool.
-  * For testing on simulated data dataset class also should implement method `replace`, which take datapoint and best predicted reviewer and replaces random real reviewer with a predicted one.
-* **IteratorBase** is an interface that encapsulates iteration over data. Since in literature there are several ways to iterate we moved this logic to the separate class.
-  * We provide two iterators from the box: one-by-one iterator over reviews and batch iterator that groups reviews by time.
+* **GerritLoader** is a class that deals with the data loader from the PullExtractor tool: loads it, reformats it, and performs some high-level preprocessing (empty data removal, bot removal, alias matching, user encoding)
+* **StandardDataset** an implementation of DatasetBase. Receives GerritLoader object and performs all the preprocessing that can be needed for a specific model
+* **SpecialDatasets** has implementations of datasets that are unique to a specific recommender
+* **get_gerrit_dataset** helping function for dataset creation. Dataset for a specific model can be created as `get_gerrit_dataset(gerritloader_object, model_cls=RecommenderBase_class)`
+
+* **StreamLoaderBase** is an interface that encapsulates iteration over data. The interface views data as a temporal stream of events and 
+yields pairs of consecutive segments of the stream - train (any set of events), test (a pull request event)
+
+### Testing of models
+* **TesterBase** is class that has `test_recommender` method. This method takes `RecommenderBase` and `StreamLoaderBase` and iterates over the dataset, retrains model on new train data, and calculates its predictions.
+* **RecTester** an implementation of TesterBase that calculates metrics standard for recommendation systems (mrr, accuracy, etc)
+* **SimulTester**  an implementation of TesterBase that tester for project-based metrics on a simulated history (*Mirsaeedi, Rigby, 2020*). Metrics for the simulated testing can be found in `Counter`.
+
+An example of usage can be found in `example.py`
 ## Baselines
 
-We also we implemented several baselines algorithms within our framework. All implementations can be found in `baselines`.
-Implemented baselines:
+Framework contains implementations of the following models (`baselines\models`)
 
 * RevFinder, *Who Should Review My Code?, Thongtanunam et al., 2015*
-* Tie, *Who Should Review This Change? Xin Xia et al., 2015*
-* *Expanding the Number of Reviewers, Chueshev et al. 2020*
+* Tie, *Who Should Review This Change?, Xin Xia et al., 2015*
+* ACRec, *Who Should Comment on This Pull Request?, Jiang et al. 2017*
+* cHRec, *Automatically Recommending Peer Reviewers in Modern Code Review, Zanjani et al., 2015*
+* CN, *What Can We Learn from Code Review and Bug Assignment?, Yu et al., 2015*
+* RevRec, *Search-Based Peer Reviewers Recommendation in Modern Code Review, Ouni et al., 2016*
+* WRC, *Automatically Recommending Code Reviewers Based on Their Expertise: An Empirical Comparison, Hannebauer et al., 2016*
+* xFinder, *Assigning change requests to software developers, Kagdi et al., 2011*
