@@ -1,5 +1,5 @@
 from data import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
-from iterator import BatchStreamLoader, StreamUntilLoader
+from data import BatchStreamLoader, StreamUntilLoader
 
 model_setup = {
     'ACRec': {'item2id': False,

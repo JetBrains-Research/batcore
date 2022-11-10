@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
@@ -76,13 +78,14 @@ def get_norm_levdist(str1, str2):
     return score
 
 
-def name_email_dist(name, email):
+def name_handle_dist(name, handle):
     """
-    checks if first and second name are in e-mail
+    checks if first and second name are in the handle (e-mail or login)
     """
+
     fn, ln = name
     if len(fn) > 1 and len(ln) > 1:
-        if fn in email and ln in email:
+        if fn in handle and ln in handle:
             return 0
 
     # if len(fn) > 0 and len(ln) > 0:
@@ -97,71 +100,48 @@ def sim_users(u1, u2):
     """
     similarity of two users name based on their name and e-mail
     """
-    # s1
-    #     return (u1, u2)
-    full_name_score = get_norm_levdist(u1['name'], u2['name'])
+    # name scores
+    if u1['name'] is np.nan or u2['name'] is np.nan:
+        name_score = 1
+    else:
+        full_name_score = get_norm_levdist(u1['name'], u2['name'])
 
-    #     if full_name_score == 1:
-    #         return 1
+        part_name_score = get_norm_levdist(u1['first_name'], u2['first_name']) + get_norm_levdist(u1['last_name'],
+                                                                                                  u2['last_name'])
+        part_name_score /= 2
 
-    # s1.5
+        email_name_score = max(name_handle_dist((u1['first_name'], u1['last_name']),
+                                                u2['email']),
+                               name_handle_dist((u2['first_name'], u2['last_name']),
+                                                u1['email'])
+                               )
 
-    part_name_score = get_norm_levdist(u1['first_name'], u2['first_name']) + get_norm_levdist(u1['last_name'],
-                                                                                              u2['last_name'])
-    part_name_score /= 2
+        name_score = min(full_name_score, part_name_score, email_name_score)
 
-    #     if part_name_score == 1:
-    #         return 1
-
-    # s2
-
-    email_name_score = max(name_email_dist((u1['first_name'], u1['last_name']),
-                                           u2['email']),
-                           name_email_dist((u2['first_name'], u2['last_name']),
-                                           u1['email'])
-                           )
-
-    #     if email_name_score == 1:
-    #         return 1
-
-    # s3
+    # handle score
 
     email_score = 1
     if not u1['short_email'] is np.nan and not u2['short_email'] is np.nan:
         if len(u1['short_email']) > 2 and len(u2['short_email']) > 2:
-            email_score = get_norm_levdist(u1['email'], u2['email'])
+            email_score = get_norm_levdist(u1['short_email'], u2['short_email'])
 
-    return min(full_name_score, part_name_score, email_name_score, email_score)
+    login_score = 1
+    if not u1['login'] is np.nan and not u2['login'] is np.nan:
+        if len(u1['login']) > 2 and len(u2['login']) > 2:
+            login_score = get_norm_levdist(u1['login'], u2['login'])
 
+    login_email_score = 1
+    if not u1['login'] is np.nan and not u2['short_email'] is np.nan:
+        if len(u1['login']) > 2 and len(u2['short_email']) > 2:
+            login_email_score = get_norm_levdist(u1['login'], u2['short_email'])
 
-def ban_users(x):
-    """
-    Filter function for non-human contributors
-    """
-    if 'ci' in x['name'].split():
-        return False
+    if not u1['short_email'] is np.nan and not u2['login'] is np.nan:
+        if len(u1['short_email']) > 2 and len(u2['login']) > 2:
+            login_email_score = min(login_email_score, get_norm_levdist(u1['short_email'], u2['login']))
 
-    if 'bot' in x['name'].split():
-        return False
+    handle_score = min(email_score, login_score, login_email_score)
 
-    if 'qt' in x['name'].split():
-        return False
-
-    if x['name'] in ['jenkins', 'zuul', 'welcome new contributor']:
-        return False
-
-    return True
-
-
-# def get_score_func(i1, row1):
-#     def score_func(i2, row2):
-#         nonlocal i1, row1
-#         if i1 > i1:
-#             return sim_users(row1, row2)
-#         if i1 == i2:
-#             return 0
-#
-#     return score_func
+    return min(name_score, handle_score)
 
 
 def get_sim_matrix(users):
@@ -180,22 +160,18 @@ def get_sim_matrix(users):
         # sim_matrix[i1] = pool.starmap(score, users.iterrows())
         sim_matrix[i1] = [score(*p) for p in users.iterrows()]
     sim_matrix = sim_matrix + sim_matrix.T
-    # for i2, row2 in users.iterrows():
-    #     if i1 > i2:
-    #         score = sim_users(row1, row2)
-    #         sim_matrix[i1, i2] = score
-    #         sim_matrix[i2, i1] = score
-    #     if i1 == i2:
-    #         sim_matrix[i1, i2] = 0
+
     return sim_matrix
 
 
-def get_clusters(users, distance_threshold=0.1):
+def get_clusters(users, distance_threshold=0.1, project='', bot_users=None):
     """
     Adaptation of the approach from the 'Mining Email Social Networks'. Algorithm measures pair-wise similarity
     between all participants and splits them into clusters with Agglomerative clustering.
+    :param bot_users: list of bots, if None bots will be detected automatically
     :param users: dataframe with users names, e-mails, and logins
     :param distance_threshold: distance parameter for clustering
+    :param project: name of the project for bot identification
     :return: dict with provides cluster id for each user
     """
     users = users.drop_duplicates().reset_index().drop('index', axis=1)
@@ -206,7 +182,8 @@ def get_clusters(users, distance_threshold=0.1):
     users['first_name'] = users.name.apply(first_name)
     users['last_name'] = users.name.apply(last_name)
 
-    users = users[users.apply(ban_users, axis=1)]
+    # ban_mask = ~users.apply(ban_users, axis=1, ban_list=bot_users, project=project)
+    # users = users[ban_mask]
     users = users.reset_index().drop('index', axis=1)
 
     sim_matrix = get_sim_matrix(users)
@@ -214,11 +191,6 @@ def get_clusters(users, distance_threshold=0.1):
                                   distance_threshold=distance_threshold,
                                   affinity='precomputed',
                                   linkage='complete').fit(sim_matrix)
-    cl, cn = np.unique(agg.labels_, return_counts=True)
-
-    # sind = np.argsort(-cn)
-    # cl = cl[sind]
-    # cn = cn[sind]
 
     users['cluster'] = agg.labels_
     df_cs = users[['cluster', 'name']].groupby('cluster').count().reset_index().rename({'name': 'cluster_size'},
@@ -232,6 +204,6 @@ def get_clusters(users, distance_threshold=0.1):
     users.loc[users['cluster'].isna(), 'cluster'] = users['cluster2'][users['cluster'].isna()]
     users['id'] = pd.factorize(users['cluster'])[0]
 
-    key2id = {str(x['initial_id']): x['id'] for _, x in users.iterrows()}
+    key2id = {x['initial_id']: x['id'] for _, x in users.iterrows()}
     key2id = defaultdict(lambda: np.nan, key2id)
     return key2id

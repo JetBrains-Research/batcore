@@ -1,3 +1,12 @@
+import re
+
+from nltk import LancasterStemmer
+
+stemmer = LancasterStemmer()
+
+import numpy as np
+
+
 class ItemMap:
     def __init__(self, data=None):
         if data is None:
@@ -25,14 +34,6 @@ class ItemMap:
             self.add(val)
 
 
-import re
-
-
-from nltk import LancasterStemmer
-
-stemmer = LancasterStemmer()
-
-
 def time_interval(col, from_date, to_date):
     """
     :return: column with rows which lies within [from_data; to_date]
@@ -46,12 +47,13 @@ def time_interval(col, from_date, to_date):
 
 def user_id_split(user_id):
     """
-    :return: split user_id into email, name, and login
+    :return: split user_id into name, email, and login
     """
     id_parts = user_id.split(':')
-    fp = ':'.join(id_parts[:-1])
-    sp = id_parts[-1]
-    return fp, sp, user_id
+    name = ':'.join(id_parts[:-2])
+    email = id_parts[-2]
+    login = id_parts[-1]
+    return name, email, login
 
 
 def get_all_reviewers(events):
@@ -113,3 +115,31 @@ def get_all_words(events):
                 s.add(w)
     l = list(s)
     return l
+
+
+def is_bot(x, project=''):
+    """
+    Filter function for non-human contributors
+    """
+    name, _, login = user_id_split(x)
+    mask_word = re.compile('(bot|test|jenkins|zuul|automation|build|job|infra)', re.IGNORECASE)
+    mask_ci = re.compile('ci', re.IGNORECASE)
+    mask_pr = re.compile(project, re.IGNORECASE)
+
+    name_ent = name
+    if name_ent is np.nan:
+        name_ent = login
+
+    if name_ent is np.nan:
+        return False
+
+    if len(re.findall(mask_pr, name_ent)):
+        return True
+
+    if len(re.findall(mask_word, name_ent)):
+        return True
+
+    if len(re.findall(mask_ci, name_ent)):
+        return True
+
+    return False

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from AliasMatching.utils import get_clusters
-from data.utils import time_interval, user_id_split
+from data.utils import time_interval, user_id_split, is_bot
 
 
 class GerritLoader:
@@ -14,13 +14,21 @@ class GerritLoader:
        download script and outputs in a comfortable format
        """
 
-    def __init__(self, path, from_date=None, to_date=None, from_checkpoint=False, alias=True):
+    def __init__(self, path, from_date=None, to_date=None,
+                 from_checkpoint=False,
+                 factorize_users=True, alias=True,
+                 remove_bots=True, bots='auto',
+                 project_name=''):
         """
         :param path: path to the folder with the data from the loader tool or to the saved dataset
         :param from_date: all events before from_date are removed from the data
         :param to_date: all events after to_date are removed from the data
         :param from_checkpoint: set to True to load saved dataset
+        :param factorize_users: when true users are replaced by id
         :param alias: True if clustering of the users by name should be performed
+        :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined
+        automatically. Otherwise, path to the csv with bot accounts should be specified
+        :param project_name: name of the project for automatic bot detection
         """
         if from_checkpoint:
             self.pulls = pd.read_csv(path + '/pulls.csv')
@@ -38,12 +46,18 @@ class GerritLoader:
             self.comments = pd.read_csv(path + '/comments.csv')
             self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
         else:
+
             self.from_date = from_date
             self.to_date = to_date
+
             data = GerritLoader.get_df(path)
+            print('loaded')
             self.pulls, self.commits, self.comments = self.prepare(data)
-            self.factorize(alias)
+            print('prep1')
+            self.prepare_users(remove_bots, bots, factorize_users, alias, project_name)
+            print('prepusers')
             self.prepare_pulls()
+            print('preppulls')
 
     @staticmethod
     def get_df(path):
@@ -151,8 +165,7 @@ class GerritLoader:
         # users
         return pulls, commits, comments
 
-    def factorize(self, alias_matching=True):
-        # maps each user to the id. if alias_matching set to true, users with close ids mapped to the same id
+    def prepare_users(self, remove_bots, bots, factorize_users, alias, project_name):
         u1 = pd.unique(self.pulls.owner)
         u2 = pd.unique(self.pulls.reviewer_login)
         u3 = pd.unique(self.commits.key_user)
@@ -160,24 +173,76 @@ class GerritLoader:
 
         users = np.unique(np.hstack((u1, u2, u3, u4)))
 
-        if alias_matching:
-            users = [user_id_split(s) for s in users]
+        if remove_bots:
+            if bots != 'auto':
+                bots = pd.read_csv(bots).fillna('')
+                bots = bots.apply(lambda x: f'{x["name"]}:{x["email"]}:{x["login"]}', axis=1)
+                bots = set(bots)
+            else:
+                bots = set([u for u in users if is_bot(u, project_name)])
 
-            users = pd.DataFrame({'email': [u[1] for u in users],
-                                  'name': [u[0] for u in users],
-                                  'initial_id': [u[2] for u in users]})
-            clusters = get_clusters(users)
-        else:
-            clusters = {u: i for i, u in enumerate(users)}
+            users = np.array([u for u in users if u not in bots])
 
-        self.pulls.owner = self.pulls.owner.apply(lambda x: clusters[x])
-        self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: clusters[x])
-        self.commits.key_user = self.commits.key_user.apply(lambda x: clusters[x])
-        self.comments.key_user = self.comments.key_user.apply(lambda x: clusters[x])
+            self.pulls['owner'] = self.pulls['owner'].apply(lambda x: np.nan if x in bots else x)
+            self.pulls['reviewer_login'] = self.pulls['reviewer_login'].apply(lambda x: np.nan if x in bots else x)
 
-        self.pulls = self.pulls.dropna()
-        self.comments = self.comments.dropna()
-        self.commits = self.commits.dropna()
+            self.pulls = self.pulls[~self.pulls.owner.isna()]
+            self.pulls = self.pulls[~self.pulls.reviewer_login.isna()]
+
+            self.commits['key_user'] = self.commits['key_user'].apply(lambda x: np.nan if x in bots else x)
+            self.comments['key_user'] = self.comments['key_user'].apply(lambda x: np.nan if x in bots else x)
+
+            self.comments = self.comments[~self.comments.key_user.isna()]
+            self.commits = self.commits[~self.commits.key_user.isna()]
+
+        if factorize_users:
+            if alias:
+                users_parts = [user_id_split(s) for s in users]
+
+                users_df = pd.DataFrame({'email': [u[1] for u in users_parts],
+                                         'name': [u[0] for u in users_parts],
+                                         'login': [u[2] for u in users_parts],
+                                         'initial_id': [u for u in users]})
+                clusters = get_clusters(users_df)
+            else:
+                clusters = {u: i for i, u in enumerate(users)}
+
+            self.pulls.owner = self.pulls.owner.apply(lambda x: clusters[x])
+            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: clusters[x])
+            self.commits.key_user = self.commits.key_user.apply(lambda x: clusters[x])
+            self.comments.key_user = self.comments.key_user.apply(lambda x: clusters[x])
+
+            # self.pulls = self.pulls.dropna()
+            # self.comments = self.comments.dropna()
+            # self.commits = self.commits.dropna()
+
+    # def factorize(self, alias_matching=True):
+    #     # maps each user to the id. if alias_matching set to true, users with close ids mapped to the same id
+    #     u1 = pd.unique(self.pulls.owner)
+    #     u2 = pd.unique(self.pulls.reviewer_login)
+    #     u3 = pd.unique(self.commits.key_user)
+    #     u4 = pd.unique(self.comments.key_user)
+    #
+    #     users = np.unique(np.hstack((u1, u2, u3, u4)))
+    #
+    #     if alias_matching:
+    #         users = [user_id_split(s) for s in users]
+    #
+    #         users = pd.DataFrame({'email': [u[1] for u in users],
+    #                               'name': [u[0] for u in users],
+    #                               'initial_id': [u[2] for u in users]})
+    #         clusters = get_clusters(users, bot_users=self.bots, project=self.project_name)
+    #     else:
+    #         clusters = {u: i for i, u in enumerate(users)}
+    #
+    #     self.pulls.owner = self.pulls.owner.apply(lambda x: clusters[x])
+    #     self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: clusters[x])
+    #     self.commits.key_user = self.commits.key_user.apply(lambda x: clusters[x])
+    #     self.comments.key_user = self.comments.key_user.apply(lambda x: clusters[x])
+    #
+    #     self.pulls = self.pulls.dropna()
+    #     self.comments = self.comments.dropna()
+    #     self.commits = self.commits.dropna()
 
     def prepare_pulls(self):
         """
