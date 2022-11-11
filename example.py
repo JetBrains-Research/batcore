@@ -13,24 +13,25 @@ if __name__ == '__main__':
     # All accounts in projects/openstack/bots.csv are treated as bots and removed.
     # Accounts with close names are matched together and encoded to the same id
 
-    data = GerritLoader('dataset-7/review.openstack.org',
-                        bots='projects/openstack/bots.csv',
-                        project_name='OpenStack',
-                        from_checkpoint=False,
-                        from_date=datetime(year=2011, month=7, day=1),
-                        to_date=datetime(year=2012, month=5, day=31),
-                        factorize_users=True, alias=True,
-                        remove_bots=True)
+    # data = GerritLoader('dataset-7/review.openstack.org',
+    #                     bots='projects/openstack/bots.csv',
+    #                     project_name='OpenStack',
+    #                     from_checkpoint=False,
+    #                     from_date=datetime(year=2011, month=7, day=1),
+    #                     to_date=datetime(year=2012, month=5, day=31),
+    #                     factorize_users=True, alias=True,
+    #                     remove_bots=True)
 
-    # data = GerritLoader('projects/openstack', from_checkpoint=True)
+    # reloads saved data from the checkpoint
+    data = GerritLoader('projects/openstack', from_checkpoint=True)
 
-    # gets dataset for the RevRec model. Pull request with more than 56 files are removed
+    # gets dataset for the CN model. Pull request with more than 56 files are removed
     dataset = get_gerrit_dataset(data, max_file=56, model_cls=CN)
 
     # creates an iterator over dataset that iterates over pull request one-by-one
     data_iterator = StreamDataLoader(dataset, 1)
 
-    # create a RevRec model. dataset.get_items2ids() provides model with necessary encodings (eg. users2id, files2id) for
+    # create a CN model. dataset.get_items2ids() provides model with necessary encodings (eg. users2id, files2id) for
     # optimization of evaluation
     model = CN(dataset.get_items2ids())
 

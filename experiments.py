@@ -80,14 +80,13 @@ def test_project_metrics(models_cls, path=None, data_args=None, filter_args=None
 
 if __name__ == '__main__':
     models = [
-        # ACRec,
-        # cHRev,
-        # CN,
-        # xFinder,
-        # Tie,
-
-        # RevRec,
-        # RevFinder,
+        ACRec,
+        cHRev,
+        CN,
+        xFinder,
+        Tie,
+        RevRec,
+        RevFinder,
         WRC,
     ]
-    test_project_metrics(models, 'results/openstack_project_metrics.json', data_args={'commits': True})
+    test_recommendation_metrics(models, 'results/openstack_rec_metrics.json')
