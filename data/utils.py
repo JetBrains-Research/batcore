@@ -1,10 +1,8 @@
 import re
-
+import numpy as np
 from nltk import LancasterStemmer
 
 stemmer = LancasterStemmer()
-
-import numpy as np
 
 
 class ItemMap:

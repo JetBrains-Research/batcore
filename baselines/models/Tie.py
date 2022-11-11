@@ -1,6 +1,6 @@
 # based on https://github.com/dezhen-k/icsme2015-paper-impl
 import copy
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import numpy as np
 

@@ -1,5 +1,6 @@
 import json
 
+
 def save_results(path, results, model):
     try:
         with open(path, 'r') as _:
