@@ -11,7 +11,7 @@ from ..utils import norm, sim
 class RevRec(BanRecommenderBase):
     """
     RevRec finds best set of reviewers based on the two metrics: group expertise on modified files and amount of
-    collaborations with pull request submitter. The search for the best set is performed via gradient decent
+    collaborations with pull request submitter. The search for the best set is performed via genetic algorithm
 
     dataset - RevRecDataset(data, comments=True, user_items=True)
 
@@ -46,7 +46,7 @@ class RevRec(BanRecommenderBase):
         if ga_params is None:
             self.ga_params = {'max_rev': 10,
                               'min_rev': 1,
-                              'size': 20,
+                              'size': 200,
                               'prob': 0.1,
                               'max_eval': 100,
                               'n': 10,

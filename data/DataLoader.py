@@ -48,7 +48,6 @@ class StreamLoaderBase(LoaderBase, ABC):
         train = self.data[from_id: self.ind + 1]
         test = self.data[self.ind + 1]
 
-        self.ind += 1
         return train, test
 
     @abstractmethod
@@ -59,21 +58,17 @@ class StreamLoaderBase(LoaderBase, ABC):
         pass
 
     def replace(self, rev):
-        l = len(self.data[self.ind]['reviewer_login'])
-        self.data[self.ind]['reviewer_login'] = deepcopy(self.data[self.ind]['reviewer_login'])
-        self.data[self.ind]['reviewer_login'][np.random.randint(l)] = rev
+        l = len(self.data[self.ind + 1]['reviewer_login'])
+        self.data[self.ind + 1]['reviewer_login'] = deepcopy(self.data[self.ind + 1]['reviewer_login'])
+        self.data[self.ind + 1]['reviewer_login'][np.random.randint(l)] = rev
 
-        return self.data[self.ind]
+        return self.data[self.ind + 1]
 
 
-class StreamDataLoader(StreamLoaderBase):
-    """
-        Stream iterator that iterates until specified amount of events of the certain type are encountered
-    """
-
-    def __init__(self, dataset, batch_size=1, until_type='pull'):
+class StreamUntilConditionLoader(StreamLoaderBase):
+    def __init__(self, dataset, condition, batch_size=1):
         super().__init__(dataset)
-        self.until_type = until_type
+        self.condition = condition
         self.bs = batch_size
 
     def get_next(self):
@@ -84,7 +79,7 @@ class StreamDataLoader(StreamLoaderBase):
             cnt = 0
             while cnt < self.bs:
                 self.ind += 1
-                while self.data[self.ind + 1]['type'] != self.until_type:
+                while not self.condition(self.data[self.ind + 1]):
                     self.ind += 1
                 cnt += 1
             return self.ind
@@ -98,60 +93,27 @@ class StreamDataLoader(StreamLoaderBase):
             return super().replace(rev)
 
 
-class StreamUntilLoader(StreamLoaderBase):
+class PullLoader(StreamUntilConditionLoader):
     """
-    Stream iterator that iterates until next event of the certain type
-    """
-
-    def __init__(self, dataset, until_type='pull'):
-        super().__init__(dataset)
-        self.until_type = until_type
-
-    def get_next(self):
-        """
-        :return: index before the event with until_type
-        """
-        try:
-            while self.data[self.ind + 1]['type'] != self.until_type:
-                self.ind += 1
-            return self.ind
-        except IndexError:
-            raise StopIteration
-
-
-class StreamAllLoader(StreamLoaderBase):
-    """
-    Stream iterator that iterates over each event
+        Stream iterator that iterates until specified amount of events of the certain type are encountered
     """
 
-    def get_next(self):
-        return self.ind
+    def __init__(self, dataset, batch_size=1):
+        super().__init__(dataset, self._condition, batch_size)
+
+    @staticmethod
+    def _condition(pull):
+        return pull['type'] == 'pull' and (len(pull['reviewer_login']) > 0)
 
 
-class BatchStreamLoader(StreamLoaderBase):
+class PullLoaderAliasTest(StreamUntilConditionLoader):
     """
-    Stream iterator that iterates until specified amount of events of the certain type are encountered
+        Stream iterator that iterates until specified amount of events of the certain type are encountered
     """
 
-    def __init__(self, dataset, batch_size=10, until_type='pull'):
-        super().__init__(dataset)
-        self.until_type = until_type
-        self.bs = batch_size
+    def __init__(self, dataset, batch_size=1):
+        super().__init__(dataset, self._condition, batch_size)
 
-    def get_next(self):
-        if self.ind + 1 >= len(self.data):
-            raise StopIteration
-        og = self.ind
-        try:
-            cnt = 0
-            while cnt < self.bs:
-                self.ind += 1
-                while self.data[self.ind + 1]['type'] != self.until_type:
-                    self.ind += 1
-                cnt += 1
-            return self.ind
-        except IndexError:
-            raise StopIteration
-
-    def replace(self, rev):
-        raise NotImplementedError()
+    @staticmethod
+    def _condition(pull):
+        return pull['type'] == 'pull' and not pull['self_review'] and (len(pull['reviewer_login']) > 0)
