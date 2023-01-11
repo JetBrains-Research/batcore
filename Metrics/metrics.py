@@ -16,21 +16,27 @@ def count_confidence(sample):
     return d
 
 
-def bootstrap_estimation(metric_vals, bootstrap_prob=0.5, bootstrap_repeat=100):
+def bootstrap_estimation(metric_vals, bootstrap_size=50, bootstrap_repeat=1000):
     """
     :param metric_vals: metrics values per data-point
     :param bootstrap_prob: probability of the data-point to appear in sub-sample
     :param bootstrap_repeat: number of bootstrap iterations
     :return: real mean and bootstrap variance estimation
     """
+
+    if bootstrap_size is None:
+        bootstrap_size = len(metric_vals)
+
     metric_vals = np.array(metric_vals)
+
     real_mean = np.mean(metric_vals)
 
-    subsample_ind = np.random.rand(len(metric_vals), bootstrap_repeat) < bootstrap_prob
-    subsample = subsample_ind * metric_vals.reshape(-1, 1)
-    subsample_cnt = subsample_ind.sum(axis=0)
+    subsample = np.random.choice(metric_vals,
+                                 size=bootstrap_size * bootstrap_repeat,
+                                 replace=True).reshape(bootstrap_size, -1)
 
-    bootstrap_means = subsample.sum(axis=0) / subsample_cnt
+    bootstrap_means = subsample.sum(axis=0) / bootstrap_size
+
     bt_mean = np.mean(bootstrap_means)
     bt_var = np.var(bootstrap_means, ddof=1)
 

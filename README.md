@@ -1,4 +1,4 @@
-# Bat CoRe: Baselines and testing framework for code reviewer recommendations
+# BaT CoRe: Baselines and testing framework for code reviewer recommendations
 
 
 

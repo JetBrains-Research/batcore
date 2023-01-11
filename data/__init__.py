@@ -14,9 +14,8 @@ __all__ = [
     "StandardDataset",
     "LoaderBase",
     "StreamLoaderBase",
-    "StreamUntilLoader",
-    "StreamAllLoader",
-    "BatchStreamLoader",
+    "StreamUntilConditionLoader",
+    "PullLoader",
+    "PullLoaderAliasTest",
     "get_gerrit_dataset",
-    'StreamDataLoader'
 ]

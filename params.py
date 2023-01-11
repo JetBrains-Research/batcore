@@ -1,5 +1,5 @@
 from data import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
-from data import BatchStreamLoader, StreamUntilLoader
+from data import PullLoader, PullLoaderAliasTest
 
 model_setup = {
     'ACRec': {'item2id': False,
@@ -25,13 +25,13 @@ model_setup = {
                   'dataset': 'revfinder',
                   'dataset_kwargs': {},
                   'iterator': 'full',
-                  'iterator_kwargs': {}},
+                  'iterator_kwargs': {'batch_size': 10}},
     'RevRec': {'item2id': True,
                'model_kwargs': {},
                'dataset': 'revrec',
                'dataset_kwargs': {'comments': True, 'user_items': True},
                'iterator': 'full',
-               'iterator_kwargs': {}},
+               'iterator_kwargs': {'batch_size': 10}},
     'Tie': {'item2id': True,
             'model_kwargs': {},
             'dataset': 'tie',
@@ -43,7 +43,7 @@ model_setup = {
             'dataset': 'standard',
             'dataset_kwargs': {'user_items': True, 'file_items': True},
             'iterator': 'batch',
-            'iterator_kwargs': {'batch': 10}},
+            'iterator_kwargs': {'batch_size': 50}},
     'xFinder': {'item2id': False,
                 'model_kwargs': {},
                 'dataset': 'standard',
@@ -58,5 +58,5 @@ dataset_classes = {'standard': StandardDataset,
                    'revfinder': RevFinderDataset,
                    'revrec': RevRecDataset}
 
-iterator_classes = {'batch': BatchStreamLoader,
-                    'full': StreamUntilLoader}
+iterator_classes = {'batch': PullLoader,
+                    'full': PullLoader}

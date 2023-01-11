@@ -73,6 +73,10 @@ def get_norm_levdist(str1, str2):
     """
     ld = LevDist(str1, str2)
     ml = max(len(str1), len(str2))
+
+    if ml == 0:
+        return 0
+
     score = ld / ml
 
     return score
@@ -130,16 +134,16 @@ def sim_users(u1, u2):
         if len(u1['login']) > 2 and len(u2['login']) > 2:
             login_score = get_norm_levdist(u1['login'], u2['login'])
 
-    login_email_score = 1
-    if not u1['login'] is np.nan and not u2['short_email'] is np.nan:
-        if len(u1['login']) > 2 and len(u2['short_email']) > 2:
-            login_email_score = get_norm_levdist(u1['login'], u2['short_email'])
+    # login_email_score = 1
+    # if not u1['login'] is np.nan and not u2['short_email'] is np.nan:
+    #     if len(u1['login']) > 2 and len(u2['short_email']) > 2:
+    #         login_email_score = get_norm_levdist(u1['login'], u2['short_email'])
 
-    if not u1['short_email'] is np.nan and not u2['login'] is np.nan:
-        if len(u1['short_email']) > 2 and len(u2['login']) > 2:
-            login_email_score = min(login_email_score, get_norm_levdist(u1['short_email'], u2['login']))
+    # if not u1['short_email'] is np.nan and not u2['login'] is np.nan:
+    #     if len(u1['short_email']) > 2 and len(u2['login']) > 2:
+    #         login_email_score = min(login_email_score, get_norm_levdist(u1['short_email'], u2['login']))
 
-    handle_score = min(email_score, login_score, login_email_score)
+    handle_score = min(email_score, login_score)
 
     return min(name_score, handle_score)
 
