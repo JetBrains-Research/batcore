@@ -8,16 +8,29 @@ Available models
 ACRec
 -------------
 
-.. autoclass:: baselines.models.ACRec
-   :members:
-   :undoc-members:
-   :special-members:
+.. autoclass:: baselines.models.ACRec.ACRec
 
 
 ACRec
 -------------
 
-.. automodule:: baselines.models.ACRec
+.. automodule:: baselines.models.ACRec.ACRec
+   :members:
+   :undoc-members:
+   :special-members:
+
+ACRec
+-------------
+
+.. automodule:: RecommenderBase
+   :members:
+   :undoc-members:
+   :special-members:
+
+ACRec
+-------------
+
+.. automodule:: RecommenderBase.recommender
    :members:
    :undoc-members:
    :special-members:
