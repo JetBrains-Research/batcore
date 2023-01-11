@@ -1,9 +1,10 @@
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 
 from data.DatasetBase import DatasetBase
-from data.utils import ItemMap
+from data.utils import ItemMap, is_bot
 
 
 class StandardDataset(DatasetBase):
@@ -13,13 +14,14 @@ class StandardDataset(DatasetBase):
 
     def __init__(self,
                  dataset,
-                 max_file=200,
+                 max_file=100,
                  commits=False,
                  comments=False,
                  user_items=False,
                  file_items=False,
                  pull_items=False,
-                 owner_policy='none',
+                 remove_empty=False,
+                 owner_policy='author_owner_fallback',
                  remove='none'
                  ):
         """
@@ -40,7 +42,7 @@ class StandardDataset(DatasetBase):
         """
 
         if remove == 'none':
-            remove = ['owner', 'author']
+            remove = ['owner']
 
         self.bad_pulls = None
         self.max_file = max_file
@@ -61,6 +63,7 @@ class StandardDataset(DatasetBase):
 
         self.owner_policy = owner_policy
         self.remove = remove
+        self.remove_empty = remove_empty
 
         super().__init__(dataset)
 
@@ -96,14 +99,18 @@ class StandardDataset(DatasetBase):
         """
         # remove opened pulls. only Merged and Abandoned stay
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
-        # remember pull w/out reviewers
-        self.bad_pulls = set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change'])
         # remember big pulls
-        self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change']))
+        # self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change']))
+        self.bad_pulls = set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change'])
+
+        if self.remove_empty:
+        # remember pull w/out reviewers
+            self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change']))
 
         # remove big pulls and pull w/out reviewers
-        pulls = pulls[pulls.reviewer_login.apply(len) > 0]
         pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
+        if self.remove_empty:
+            pulls = pulls[pulls.reviewer_login.apply(len) > 0]
 
         # owner estimation
         if self.owner_policy == 'author':
@@ -124,7 +131,6 @@ class StandardDataset(DatasetBase):
             for col in self.remove:
                 pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x[col]],
                                                    axis=1)
-            pulls = pulls[pulls.reviewer_login.apply(lambda x: len(x) > 0)]
 
         # add label
         pulls.loc[:, 'type'] = 'pull'
