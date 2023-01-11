@@ -1,9 +1,18 @@
 from collections import defaultdict
-
+from multiprocessing import Pool
+from itertools import product
+from functools import partial
 import numpy as np
 
 from RecommenderBase.recommender import BanRecommenderBase
 from ..utils import LCP, path2list
+
+
+def count_score(f1, f2, i, wrc=None, files=None):
+    val = wrc[files.getid(f2), i]
+    if val >= 0:
+        return val * LCP(path2list(f1), path2list(f2))
+    return 0
 
 
 class WRC(BanRecommenderBase):
@@ -42,19 +51,41 @@ class WRC(BanRecommenderBase):
 
         self.known_files = set()
 
+        # self.scores = {}
+        # self.p = Pool(5)
+        self.lcp_results = -np.ones((len(self.files), len(self.files)))
+
+    def LCP_count(self, f1, f2):
+        f1_id = self.files.getid(f1)
+        f2_id = self.files.getid(f2)
+
+        if self.lcp_results[f1_id, f2_id] == -1:
+            self.lcp_results[f1_id, f2_id] = LCP(path2list(f1), path2list(f2))
+
+        return self.lcp_results[f1_id, f2_id]
+
     def predict(self, pull, n=10):
         """
         counts sum of all wrc score for each possible reviewer and files in the pull
         :param n: number of reviewers to recommend
         """
         scores = defaultdict(lambda: 0)
-
         for f1 in self.known_files:
             for f2 in pull['file_path']:
                 for i in range(self.wrc.shape[1]):
                     val = self.wrc[self.files.getid(f2), i]
                     if val >= 0:
-                        scores[self.users[i]] += val * LCP(path2list(f1), path2list(f2))
+                        scores[self.users[i]] += val * self.LCP_count(f1, f2)  # LCP(path2list(f1), path2list(f2))
+
+        # params = product(self.known_files, pull['file_path'], range(self.wrc.shape[1]))
+        # res = [count_score(f1, f2, i, self.wrc, self.files) for f1, f2, i in params]
+
+        # res = self.p.starmap(partial(count_score, wrc=self.wrc, files=self.files),
+        #                      product(self.known_files, pull['file_path'], range(self.wrc.shape[1])))
+        #
+        # params = product(self.known_files, pull['file_path'], range(self.wrc.shape[1]))
+        # for (f1, f2, i), r in zip(params, res):
+        #     scores[self.users[i]] += r
 
         self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
