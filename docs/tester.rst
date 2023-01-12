@@ -4,7 +4,7 @@
 Testing Methods
 ===============
 
-.. autoclass:: baselines.models.RevRec.RevRec
+.. autoclass:: tester.TesterBase.TesterBase
    :members:
    :no-undoc-members:
    :exclude-members:
@@ -19,7 +19,7 @@ Testing Methods
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: tester.TesterBase.TesterBase
+.. autoclass:: tester.SimulTester.SimulTester
    :members:
    :no-undoc-members:
    :exclude-members:
