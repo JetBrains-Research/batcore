@@ -10,3 +10,4 @@ Contents
    basemodels
    models
    tester
+   simulmetrics
