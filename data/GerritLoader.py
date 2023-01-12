@@ -19,8 +19,7 @@ class GerritLoader:
         :param from_checkpoint: set to True to load saved dataset
         :param factorize_users: when true users are replaced by id
         :param alias: True if clustering of the users by name should be performed
-        :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined
-        automatically. Otherwise, path to the csv with bot accounts should be specified
+        :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined automatically. Otherwise, path to the csv with bot accounts should be specified
         :param project_name: name of the project for automatic bot detection
        """
 
