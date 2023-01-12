@@ -1,4 +1,4 @@
-.. _models_toplevel:
+.. _basemodels_toplevel:
 
 =======================
 Base Classes for Models
