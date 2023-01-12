@@ -8,8 +8,3 @@ Available Models
    :members:
    :no-undoc-members:
    :exclude-members:
-
-.. autoclass:: RecommenderBase.recommender.BanRecommenderBase
-   :members:
-   :no-undoc-members:
-   :exclude-members:
