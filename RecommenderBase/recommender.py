@@ -11,8 +11,9 @@ class RecommenderBase(ABC):
     def predict(self, pull, n=10):
         """
         predicts best n reviewers for the pull
+
         :param pull: pull for which reviewers need to be predicted
-        :param n: number of reviewers to predict
+        :param int n: number of reviewers to predict
         :return: list of recommendations
         """
         pass
