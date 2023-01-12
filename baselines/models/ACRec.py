@@ -14,6 +14,12 @@ class ACRec(BanRecommenderBase):
 
     Paper: "Who Should Comment on This Pull Request? Analyzing Attributes for More Accurate
     Commenter Recommendation in Pull-Based Development"
+
+    :param gamma: number of days to pass for a pull request to ignored during predictions
+    :param lambd: time-decaying parameter
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -22,13 +28,6 @@ class ACRec(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param gamma: number of days to pass for a pull request to ignored during predictions
-        :param lambd: time-decaying parameter
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
         super().__init__(no_owner, no_inactive, inactive_time)
 
         self.gamma = timedelta(days=gamma)
@@ -39,11 +38,11 @@ class ACRec(BanRecommenderBase):
 
     def predict(self, pull, n=10):
         """
+        goes through recent pull requests and accumulates score for each commenter based on the recency of their comment
+
         :param pull: pull requests for which reviwers are required
         :param n: number of reviewers to recommend
         :return: at most n reviewers
-
-        goes through recent pull requests and accumulates score for each commenter based on the recency of their comment
         """
         scores = defaultdict(lambda: 0)
         date = pull['date']
@@ -60,8 +59,9 @@ class ACRec(BanRecommenderBase):
 
     def fit(self, data):
         """
-        :param data: a batch of pull requests and comments
         remembers each pull request and build relation between them and comments
+
+        :param data: a batch of pull requests and comments
         """
         super().fit(data)
         for event in data:

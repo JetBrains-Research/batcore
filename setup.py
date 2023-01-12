@@ -9,5 +9,5 @@ setup(name='batcore',
       license='TODO',
       packages=['batcore'],
       zip_safe=False,
-      install_requires=['numpy', 'scipy', 'tqdm'],
+      install_requires=[],
       )
