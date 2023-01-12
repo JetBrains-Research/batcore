@@ -7,4 +7,5 @@ Contents
 
 .. toctree::
    overview
+   basemodels
    models

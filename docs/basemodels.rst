@@ -1,8 +1,8 @@
 .. _models_toplevel:
 
-================
-Available Models
-================
+=======================
+Base Classes for Models
+=======================
 
 .. autoclass:: RecommenderBase.recommender.RecommenderBase
    :members:
