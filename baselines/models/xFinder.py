@@ -15,17 +15,17 @@ class xFinder(BanRecommenderBase):
     dataset - StandardDataset(data, commits=True)
 
     Paper: "Assigning change requests to software developers"
+
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
 
         # developer-coder map. dict with keys (file, developer) and triplet values
@@ -50,9 +50,12 @@ class xFinder(BanRecommenderBase):
 
     def predict(self, pull, n=10):
         """
-       scoring of candidates is performed by xFactor (equations from page 8)
-       :return: predicts at most :param n: reviewers for the :param pull:
-       """
+        scoring of candidates is performed by xFactor (equations from page 8)
+
+        :param pull: pull requests for which reviwers are required
+        :param n: number of reviewers to recommend
+        :return: at most n reviewers for the pull request
+        """
         scores = defaultdict(lambda: 0)
         for file in pull['file_path']:
             file_val = self.fv[file]

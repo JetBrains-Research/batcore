@@ -42,7 +42,7 @@ class ACRec(BanRecommenderBase):
 
         :param pull: pull requests for which reviwers are required
         :param n: number of reviewers to recommend
-        :return: at most n reviewers
+        :return: at most n reviewers for the pull request
         """
         scores = defaultdict(lambda: 0)
         date = pull['date']

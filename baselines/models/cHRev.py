@@ -12,17 +12,17 @@ class cHRev(BanRecommenderBase):
     dataset - StandardDataset(data, comments=True)
 
     Paper: "Automatically Recommending Peer Reviewers in Modern Code Review"
+
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
 
         # reviewer expertise map. dict with (file, commenter)-triplet relation
@@ -41,7 +41,10 @@ class cHRev(BanRecommenderBase):
     def predict(self, pull, n=10):
         """
         scoring of candidates is performed by xFactor (equation 1-2 from the paper)
-        :return: predicts at most :param n: reviewers for the :param pull:
+
+        :param pull: pull requests for which reviewers are required
+        :param n: number of reviewers to recommend
+        :return: at most n reviewers for the pull request
         """
         scores = defaultdict(lambda: 0)
         for file in pull['file_path']:

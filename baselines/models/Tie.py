@@ -17,6 +17,14 @@ class Tie(BanRecommenderBase):
     dataset - TieDataset(data)
     Paper: "Who Should Review This Change? Putting Text and File Location Analyses Together for More Accurate
     Recommendations"
+
+    :param item_list: dict with word_list and reviewer_list
+    :param text_splitter: a function to parse pull comments
+    :param alpha: weight between path-based and text-based recommenders
+    :param max_date: time in days after which reviews are not considered
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -27,15 +35,7 @@ class Tie(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param item_list: dict with word_list and reviewer_list
-        :param text_splitter: a function to parse pull comments
-        :param alpha: weight between path-based and text-based recommenders
-        :param max_date: time in days after which reviews are not considered
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
         self.history = []
         self.word_list = item_list['word_list']
@@ -55,6 +55,7 @@ class Tie(BanRecommenderBase):
     def predict(self, pull, n=10):
         """
         Recommends appropriate reviewers of the given review. This method returns `max_count` reviewers at most.
+
         :param n: number of candidates to return
         """
         pull = self.update_pull(pull)
@@ -113,7 +114,7 @@ class Tie(BanRecommenderBase):
 
     def bayes_score(self, pull, reviewer_index):
         """
-        Assigns score for the :param pull: to the candidate :param reviewer_index: based on naive bayes classifier
+        Assigns score to each candidate based on naive bayes classifier trained on pull titles
         """
         product = 1
         s = 0
@@ -126,7 +127,7 @@ class Tie(BanRecommenderBase):
 
     def update_pull(self, pull):
         """
-        turns title into bag of words vector and replaces reviewers with theri ids
+        turns title into bag of words vector and replaces reviewers with their ids
         """
         pull = copy.deepcopy(pull)
 

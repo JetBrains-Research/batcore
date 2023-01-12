@@ -23,6 +23,12 @@ class WRC(BanRecommenderBase):
     dataset - StandardDataset(data, user_items=True, file_items=True)
 
     Paper : "Automatically Recommending Code Reviewers Based on Their Expertise: An Empirical Comparison"
+
+    :param items2ids: dict with user2id and file2id
+    :param delta: time decay factor for weight of the previous reviews
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -31,13 +37,7 @@ class WRC(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param items2ids: dict with user2id and file2id
-        :param delta: time decay factor for weight of the previous reviews
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
 
         self.files = items2ids['files']
@@ -67,6 +67,7 @@ class WRC(BanRecommenderBase):
     def predict(self, pull, n=10):
         """
         counts sum of all wrc score for each possible reviewer and files in the pull
+
         :param n: number of reviewers to recommend
         """
         scores = defaultdict(lambda: 0)

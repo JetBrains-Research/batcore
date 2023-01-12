@@ -19,6 +19,12 @@ class CN(BanRecommenderBase):
     dataset - StandardDataset(data, comments=True, user_items=True)
 
     Paper: "Reviewer Recommendation for Pull-Requests in GitHub: What Can We Learn from Code Review and Bug Assignment?"
+
+    :param items2ids: dict with user2id
+    :param lambd: weight decay coefficient for comments within a single review beyond the first one
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -27,13 +33,7 @@ class CN(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param items2ids: dict with user2id
-        :param lambd: weight decay coefficient for comments within a single review beyond the first one
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
 
         self.users = items2ids['users']

@@ -20,6 +20,12 @@ class RevFinder(BanRecommenderBase):
 
     Paper : "Who Should Review My Code? A File Location-Based Code-Reviewer Recommendation Approach for Modern
     Code Review"
+
+    :param items2ids: dict with all possible reviewers
+    :param max_date: time in days after which old reviews stop influence predictions
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -28,13 +34,7 @@ class RevFinder(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param items2ids: dict with all possible reviewers
-        :param max_date: time in days after which old reviews stop influence predictions
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
+
         super().__init__(no_owner, no_inactive, inactive_time)
         self.history = []
         self.max_date = max_date

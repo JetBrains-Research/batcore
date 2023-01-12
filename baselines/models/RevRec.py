@@ -16,6 +16,22 @@ class RevRec(BanRecommenderBase):
     dataset - RevRecDataset(data, comments=True, user_items=True)
 
     Paper: "Search-Based Peer Reviewers Recommendation in Modern Code Review"
+
+    :param items2ids: dict with users2ids
+    :param k: threshold for files similarity
+    :param ga_params: dict of hyperparameters for genetic algorithm
+
+        :ga_parameter max_rev: maximum number of reviewers to recommend. default=10
+        :ga_parameter min_rev: minimum number of reviewers to recommend. default=1
+        :ga_parameter size: population size. default=20
+        :ga_parameter prob: mutation probability. default=0.1
+        :ga_parameter max_eval: number of genetic algorithm iterations. default=100
+        :ga_parameter n: number of best solutions that contribute to the sorting of the best reviewers. default=10
+        :ga_parameter alpha: weight of the reviewer expertise score. default=0.5
+        :ga_parameter beta: weight of the reviewer collaboration score. default=0.5
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
 
     def __init__(self,
@@ -25,22 +41,7 @@ class RevRec(BanRecommenderBase):
                  no_owner=True,
                  no_inactive=True,
                  inactive_time=60):
-        """
-        :param items2ids: dict with users2ids
-        :param k: threshold for files similarity
-        :param ga_params: dict of hyperparameters for genetic algorithm
-            :ga_parameter max_rev: maximum number of reviewers to recommend. default=10
-            :ga_parameter min_rev: minimum number of reviewers to recommend. default=1
-            :ga_parameter size: population size. default=20
-            :ga_parameter prob: mutation probability. default=0.1
-            :ga_parameter max_eval: number of genetic algorithm iterations. default=100
-            :ga_parameter n: number of best solutions that contribute to the sorting of the best reviewers. default=10
-            :ga_parameter alpha: weight of the reviewer expertise score. default=0.5
-            :ga_parameter beta: weight of the reviewer collaboration score. default=0.5
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-       """
+
         super().__init__(no_owner, no_inactive, inactive_time)
 
         if ga_params is None:
@@ -133,8 +134,10 @@ class RevRec(BanRecommenderBase):
 
     def run_ga(self, owners, expertise):
         """
-        runs a genetic algorithm for the pull request made by :param owners: and vector of candidate expertise
-        :param expertise:
+        runs a genetic algorithm to get reviewers recommendations
+
+        :param owners: owners of the pull requests for which are recommendations are made
+        :param expertise: expertise of the potential candidates
         :return: best set of reviewers and list of occurrences of each reviewer in the last population
         """
         population = np.random.normal(size=(self.ga_params['size'], self.active_revs)) > 0.2
@@ -176,7 +179,9 @@ class RevRec(BanRecommenderBase):
 
     def predict(self, pull, n=10):
         """
-        predicts at most :param n: reviewers for the given pull request :param pull:
+        :param pull: pull requests for which reviwers are required
+        :param n: number of reviewers to recommend
+        :return: at most n reviewers for the pull request
         """
 
         # calculation of the candidate expertise based on the file path similarities of the changed files with
