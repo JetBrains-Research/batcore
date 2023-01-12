@@ -8,7 +8,7 @@ Available models
 ACRec
 -------------
 
-.. autoclass:: RecommenderBase.RecommenderBase
+.. autoclass:: RecommenderBase.recommender.RecommenderBase
    :members:
    :no-undoc-members:
    :exclude-members:
