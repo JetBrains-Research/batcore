@@ -1,14 +1,14 @@
 .. _models_toplevel:
 
-=============
+================
 Available models
-=============
+================
 
 
 ACRec
 -------------
 
-.. autoclass:: RecommenderBase.recommender.RecommenderBase
+.. autoclass:: RecommenderBase.RecommenderBase
    :members:
    :no-undoc-members:
    :exclude-members:
