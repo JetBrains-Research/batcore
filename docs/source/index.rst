@@ -8,4 +8,3 @@ Contents
 .. toctree::
    overview
    models
-   api
