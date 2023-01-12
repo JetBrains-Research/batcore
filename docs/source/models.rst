@@ -8,7 +8,10 @@ Available models
 ACRec
 -------------
 
-.. autoclass:: baselines.models.ACRec.ACRec
+.. autoclass:: RecommenderBase.recommender.RecommenderBase
+   :members:
+   :no-undoc-members:
+   :exclude-members: rank_items
 
 
 ACRec
