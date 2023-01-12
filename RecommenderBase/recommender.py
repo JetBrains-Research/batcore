@@ -30,13 +30,12 @@ class RecommenderBase(ABC):
 class BanRecommenderBase(RecommenderBase, ABC):
     """
     Base class for the recommender models with built-in filtering of the candidates.
+
+    :param no_owner: flag to add or remove owners of the pull request from the recommendations
+    :param no_inactive: flag to add or remove inactive reviewers from recommendations
+    :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
     """
     def __init__(self, no_owner=True, no_inactive=True, inactive_time=60):
-        """
-        :param no_owner: flag to add or remove owners of the pull request from the recommendations
-        :param no_inactive: flag to add or remove inactive reviewers from recommendations
-        :param inactive_time: number of consecutive days without any actions needed to be considered an inactive
-        """
         super().__init__()
         self.no_owner = no_owner
         self.no_inactive = no_inactive
@@ -55,6 +54,7 @@ class BanRecommenderBase(RecommenderBase, ABC):
     def remove_inactive(self, scores, cur_date):
         """
         removes recently inactive users from the resulstin scores
+
         :param scores: dict with scores for each reviewer candidate
         :param cur_date: date of the pull request for which scores were calculated
         """
@@ -68,6 +68,7 @@ class BanRecommenderBase(RecommenderBase, ABC):
     def update_time(self, events):
         """
         for all the participants in each event updates time of most recent action
+
         :param events: batch of events
         """
         for event in events:
@@ -87,8 +88,10 @@ class BanRecommenderBase(RecommenderBase, ABC):
 
     def filter(self, scores, pull):
         """
-        For the pr :param pull: with candidates score :param scores: removes all undesirable
-        :return:
+        For the given pull request filters candidates
+
+        :param pull: pull request for which recommendations are calculated
+        :param scores: dict scores of potential candidates for the code review
         """
         if self.no_owner:
             for owner in pull['owner']:
