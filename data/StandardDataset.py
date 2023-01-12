@@ -10,6 +10,20 @@ from data.utils import ItemMap, is_bot
 class StandardDataset(DatasetBase):
     """
     dataset for most of the implemented models.
+
+    :param dataset: GerritLoader-like object
+    :param max_file: maximum number of files that a review can have
+    :param commits: if False commits are omitted from the data
+    :param comments: if False comments are omitted from the data
+    :param user_items: if True user2id map is created
+    :param file_items: if True file2id map is created
+    :param pull_items: if true pull2id map is created
+    :param owner_policy: how pull owners are calculated.
+        * None - owners are unchanged
+        * author - commit authors of the pull are treated as owners
+        * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
+        * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
+    :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
     """
 
     def __init__(self,
@@ -24,22 +38,6 @@ class StandardDataset(DatasetBase):
                  owner_policy='author_owner_fallback',
                  remove='none'
                  ):
-        """
-
-        :param dataset: GerritLoader-like object
-        :param max_file: maximum number of files that a review can have
-        :param commits: if False commits are omitted from the data
-        :param comments: if False comments are omitted from the data
-        :param user_items: if True user2id map is created
-        :param file_items: if True file2id map is created
-        :param pull_items: if true pull2id map is created
-        :param owner_policy: how pull owners are calculated.
-            * None - owners are unchanged
-            * author - commit authors of the pull are treated as owners
-            * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
-            * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
-        :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
-        """
 
         if remove == 'none':
             remove = ['owner']

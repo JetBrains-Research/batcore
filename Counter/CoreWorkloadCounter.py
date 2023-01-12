@@ -5,6 +5,7 @@ def CoreWorkloadCounter(history, from_date=None, to_date=None):
     """
     Core Workload estimates amount of work for core developers. Core Workload equals to the total number of reviews
     performed by 10 reviews that reviewed the most
+
     :param history: data with reviews
     :param from_date: start of the period on which CoreWorkload is calculated. If None starts from the start of history
     :param to_date: end of the period on which CoreWorkload is calculated. If None ends at the end of history

@@ -10,17 +10,9 @@ from data.utils import time_interval, user_id_split, is_bot
 
 class GerritLoader:
     """
-       Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
-       download script and outputs in a comfortable format
-       """
+        Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
+        download script and outputs in a comfortable format
 
-    def __init__(self, path, from_date=None, to_date=None,
-                 from_checkpoint=False,
-                 process_users=False,
-                 factorize_users=True, alias=False,
-                 remove_bots=True, bots='auto',
-                 project_name=''):
-        """
         :param path: path to the folder with the data from the loader tool or to the saved dataset
         :param from_date: all events before from_date are removed from the data
         :param to_date: all events after to_date are removed from the data
@@ -30,6 +22,16 @@ class GerritLoader:
         :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined
         automatically. Otherwise, path to the csv with bot accounts should be specified
         :param project_name: name of the project for automatic bot detection
+       """
+
+    def __init__(self, path, from_date=None, to_date=None,
+                 from_checkpoint=False,
+                 process_users=False,
+                 factorize_users=True, alias=False,
+                 remove_bots=True, bots='auto',
+                 project_name=''):
+        """
+
         """
         if from_checkpoint:
             self.pulls = pd.read_csv(path + '/pulls.csv', index_col=0)
@@ -260,6 +262,7 @@ class GerritLoader:
     def to_checkpoint(self, path):
         """
         saves dataset
+
         :param path: path to the folder to save results
         """
 
