@@ -13,5 +13,3 @@ Base Classes for Models
    :members:
    :no-undoc-members:
    :exclude-members:
-
-A

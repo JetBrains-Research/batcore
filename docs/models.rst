@@ -4,7 +4,7 @@
 Available Models
 ================
 
-.. autoclass:: RecommenderBase.recommender.RecommenderBase
+.. autoclass:: baselines.models.ACRec.ACRec
    :members:
    :no-undoc-members:
    :exclude-members:
@@ -13,5 +13,3 @@ Available Models
    :members:
    :no-undoc-members:
    :exclude-members:
-
-A
