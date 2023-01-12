@@ -38,3 +38,8 @@ Available Models
    :members:
    :no-undoc-members:
    :exclude-members:
+
+.. autoclass:: baselines.models.CN.CN
+   :members:
+   :no-undoc-members:
+   :exclude-members:
