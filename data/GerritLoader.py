@@ -30,9 +30,7 @@ class GerritLoader:
                  factorize_users=True, alias=False,
                  remove_bots=True, bots='auto',
                  project_name=''):
-        """
 
-        """
         if from_checkpoint:
             self.pulls = pd.read_csv(path + '/pulls.csv', index_col=0)
             self.pulls.date = pd.to_datetime(self.pulls.date).dt.tz_localize(None)
