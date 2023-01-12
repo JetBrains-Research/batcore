@@ -6,7 +6,7 @@ Models
 
 
 Recommender Base
--------------
+----------------
 
 .. autoclass:: RecommenderBase.recommender.RecommenderBase
    :members:
@@ -14,7 +14,7 @@ Recommender Base
    :exclude-members:
 
 Ban Recommender Base
--------------
+--------------------
 
 .. autoclass:: RecommenderBase.recommender.BanRecommenderBase
    :members:
