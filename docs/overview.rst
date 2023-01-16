@@ -1,10 +1,11 @@
 .. _intro_toplevel:
 
 ==================
-Overview / Install
+Overview / Installlation
 ==================
 
-BaTCoRe is a Python framework for testing and building models for code reviewer recommendation problem. BaTCoRe provides interfaces for building new models, methods for testing models in different settings, and implementation of several popular ARR methods.
+BaTCoRe is a Python framework for testing and building models for code reviewer recommendation.
+BaTCoRe provides interfaces for building new models, methods for testing models in different settings, and implementation of several popular reviewer recommendation methods.
 
 
 Requirements
@@ -23,11 +24,11 @@ TODO
 Source Code
 ===========
 
-BaTCoRe's git repo is available on GitHub, which can be browsed at:
+BaTCoRe is available on GitHub:
 
  * https://github.com/JetBrains-Research/batcore
 
-and cloned using::
+It can be cloned using::
 
     $ git clone https://github.com/JetBrains-Research/batcore
 
