@@ -4,12 +4,12 @@
 Data Classes
 ============
 
-.. autoclass:: data.StandardDataset.StandardDataset
+.. autoclass:: batcore.data.StandardDataset.StandardDataset
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: data.GerritLoader.GerritLoader
+.. autoclass:: batcore.data.GerritLoader.GerritLoader
    :members:
    :no-undoc-members:
    :exclude-members:

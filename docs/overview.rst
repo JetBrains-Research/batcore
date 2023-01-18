@@ -18,8 +18,10 @@ Requirements
 
 Installing BaTCoRe
 ====================
+BaTCoRe can be installed via pip::
 
-TODO
+    $ pip install batcore
+
 
 Source Code
 ===========

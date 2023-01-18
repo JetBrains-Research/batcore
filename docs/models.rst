@@ -4,42 +4,42 @@
 Available Models
 ================
 
-.. autoclass:: baselines.models.ACRec.ACRec
+.. autoclass:: batcore.baselines.models.ACRec.ACRec
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.cHRev.cHRev
+.. autoclass:: batcore.baselines.models.cHRev.cHRev
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.RevFinder.RevFinder
+.. autoclass:: batcore.baselines.models.RevFinder.RevFinder
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.RevRec.RevRec
+.. autoclass:: batcore.baselines.models.RevRec.RevRec
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.Tie.Tie
+.. autoclass:: batcore.baselines.models.Tie.Tie
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.WRC.WRC
+.. autoclass:: batcore.baselines.models.WRC.WRC
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.xFinder.xFinder
+.. autoclass:: batcore.baselines.models.xFinder.xFinder
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: baselines.models.CN.CN
+.. autoclass:: batcore.baselines.models.CN.CN
    :members:
    :no-undoc-members:
    :exclude-members:

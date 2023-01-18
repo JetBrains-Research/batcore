@@ -4,22 +4,22 @@
 Testing Methods
 ===============
 
-.. autoclass:: tester.TesterBase.TesterBase
+.. autoclass:: batcore.tester.TesterBase.TesterBase
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: tester.RecTester.RecTester
+.. autoclass:: batcore.tester.RecTester.RecTester
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: tester.RecTester.RecTesterAliasTest
+.. autoclass:: batcore.tester.RecTester.RecTesterAliasTest
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: tester.SimulTester.SimulTester
+.. autoclass:: batcore.tester.SimulTester.SimulTester
    :members:
    :no-undoc-members:
    :exclude-members:
