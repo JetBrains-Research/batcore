@@ -1,8 +1,8 @@
 .. _intro_toplevel:
 
-==================
+========================
 Overview / Installlation
-==================
+========================
 
 BaTCoRe is a Python framework for testing and building models for code reviewer recommendation.
 BaTCoRe provides interfaces for building new models, methods for testing models in different settings, and implementation of several popular reviewer recommendation methods.
