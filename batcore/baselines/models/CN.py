@@ -6,7 +6,7 @@ from scipy.sparse import dok_matrix
 import networkx as nx
 from community import community_louvain
 
-from RecommenderBase.recommender import BanRecommenderBase
+from batcore.RecommenderBase.recommender import BanRecommenderBase
 
 
 # TODO look into multiple owners

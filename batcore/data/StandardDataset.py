@@ -1,10 +1,9 @@
 from copy import deepcopy
 
 import numpy as np
-import pandas as pd
 
-from data.DatasetBase import DatasetBase
-from data.utils import ItemMap, is_bot
+from batcore.data.DatasetBase import DatasetBase
+from batcore.data.utils import ItemMap
 
 
 class StandardDataset(DatasetBase):

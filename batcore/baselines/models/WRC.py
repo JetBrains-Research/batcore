@@ -1,10 +1,8 @@
+import ast
 from collections import defaultdict
-from multiprocessing import Pool
-from itertools import product
-from functools import partial
 import numpy as np
 
-from RecommenderBase.recommender import BanRecommenderBase
+from batcore.RecommenderBase.recommender import BanRecommenderBase
 from ..utils import LCP, path2list
 
 
@@ -108,3 +106,20 @@ class WRC(BanRecommenderBase):
                     self.known_files.add(file)
                     for user in event['reviewer_login']:
                         self.wrc[self.files.getid(file), self.users.getid(user)] += 1 / len(event['reviewer_login'])
+
+    def save(self, path='checkpoints'):
+        with open(f"{path}/wrc/wrc.npy", 'wb') as f:
+            np.save(f, self.wrc)
+        with open(f"{path}/wrc/lcp.npy", 'wb') as f:
+            np.save(f, self.lcp_results)
+        with open(f"{path}/wrc/files.npy", 'w') as f:
+            f.write(str(self.known_files))
+
+    def load(self, path='checkpoints/wrc'):
+        with open(f"{path}/wrc.npy", 'rb') as f:
+            self.wrc = np.load(f)
+        with open(f"{path}/lcp.npy", 'rb') as f:
+            self.lcp_results = np.load(f)
+        with open(f"{path}/files.npy", 'r') as f:
+            self.known_files = ast.literal_eval(f.read())
+

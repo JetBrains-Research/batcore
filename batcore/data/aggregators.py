@@ -1,7 +1,6 @@
 from copy import deepcopy
 
-from baselines import *
-from data import StandardDataset, RevRecDataset, TieDataset, RevFinderDataset
+from batcore.data import StandardDataset, RevRecDataset, TieDataset, RevFinderDataset
 
 default_args = {'max_file': 50,
                 'commits': False,

@@ -4,8 +4,8 @@ import os
 import numpy as np
 import pandas as pd
 
-from AliasMatching.utils import get_clusters
-from data.utils import time_interval, user_id_split, is_bot
+from batcore.AliasMatching.utils import get_clusters
+from batcore.data.utils import time_interval, user_id_split, is_bot
 
 
 class GerritLoader:

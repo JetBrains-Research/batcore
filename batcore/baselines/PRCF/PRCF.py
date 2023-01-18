@@ -3,8 +3,8 @@ from collections import defaultdict
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from RecommenderBase.recommender import RecommenderBase, BanRecommenderBase
-from baselines.PRCF.utils import pearson, LCP
+from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.baselines.PRCF.utils import pearson, LCP
 
 
 class PRCF(BanRecommenderBase):

@@ -1,11 +1,6 @@
 from copy import deepcopy
 
-from Counter.CoreWorkloadCounter import CoreWorkloadCounter
-from Counter.ExpertiseCounter import ExpertiseCounter
-from Counter.FaRCounter import FaRCounter
-from baselines import *
-from data import *
-from tester import RecTester, SimulTester, RecTesterAliasTest
+from batcore import SimulTester, RecTesterAliasTest
 from utils import save_results
 from params import *
 
@@ -54,7 +49,7 @@ def test_recommendation_metrics(models_cls, path=None, data_path=None, data_args
         save_results(f'{path}.json', res[0], model)
 
 
-def test_project_metrics(models_cls, path=None, data_path=None, data_args=None, filter_args=None):
+def test_project_metrics(models_cls, path=None, data_path=None, data_args=None, filter_args=None, dataset_name=''):
     if filter_args is None:
         filter_args = {}
     if data_args is None:
@@ -81,8 +76,9 @@ def test_project_metrics(models_cls, path=None, data_path=None, data_args=None, 
         else:
             model = mdl_cls(**model_kwargs)
 
+        # tester = SimulTesterCheckpoint()
         tester = SimulTester()
-        res = tester.test_recommender(model, data_iterator)
+        res = tester.test_recommender(model, data_iterator, dataset_name=dataset_name)
         print(f'Finished for {mdl_cls.__name__}')
         save_results(path, res, model)
 
@@ -95,17 +91,17 @@ if __name__ == '__main__':
         # CN,
         # Tie,
         # RevRec,
-        # RevFinder,
-        WRC,
+        RevFinder,
+        # WRC,
     ]
-    # test_project_metrics(models,
-    #                      path='results/openstack_old/alias_wrc_base.json',
-    #                      data_path='projects/libreoffice/alias',
-    #                      filter_args={'no_owner': True, 'no_inactive': True, 'inactive_time': 30},
-    #                      data_args={'remove_empty': False})
+    test_project_metrics(models,
+                         path='results/android/proj_alias_base.json',
+                         data_path='projects/android/alias',
+                         filter_args={'no_owner': True, 'no_inactive': True, 'inactive_time': 30},
+                         data_args={'remove_empty': False}, dataset_name='android')
 
-    test_recommendation_metrics(models,
-                                path='results/android/rec_base',
-                                data_path='projects/android/alias',
-                                filter_args={'no_owner': True, 'no_inactive': True, 'inactive_time': 30},
-                                data_args={'remove_empty': False})
+    # test_recommendation_metrics(models,
+    #                             path='results/android/rec_base',
+    #                             data_path='projects/android/alias',
+    #                             filter_args={'no_owner': True, 'no_inactive': True, 'inactive_time': 30},
+    #                             data_args={'remove_empty': False})

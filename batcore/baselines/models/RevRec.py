@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from RecommenderBase.recommender import BanRecommenderBase
+from batcore.RecommenderBase.recommender import BanRecommenderBase
 from ..utils import norm, sim
 
 
@@ -47,7 +47,7 @@ class RevRec(BanRecommenderBase):
         if ga_params is None:
             self.ga_params = {'max_rev': 10,
                               'min_rev': 1,
-                              'size': 200,
+                              'size': 20,
                               'prob': 0.1,
                               'max_eval': 100,
                               'n': 10,
