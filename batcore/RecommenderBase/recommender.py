@@ -10,7 +10,7 @@ class RecommenderBase(ABC):
     @abstractmethod
     def predict(self, pull, n=10):
         """
-        predicts best n reviewers for the pull
+        predicts best n reviewers for the pull TESTING
 
         :param pull: pull for which reviewers need to be predicted
         :param int n: number of reviewers to predict
