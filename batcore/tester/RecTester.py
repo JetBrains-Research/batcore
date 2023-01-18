@@ -1,8 +1,8 @@
 import pandas as pd
 from tqdm import tqdm
 
-from tester.TesterBase import TesterBase
-from Metrics.metrics import count_metrics
+from batcore.tester.TesterBase import TesterBase
+from batcore.Metrics.metrics import count_metrics
 
 
 class RecTester(TesterBase):

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from itertools import chain
 
-from Counter.CounterBase import CounterBase
+from batcore.Counter.CounterBase import CounterBase
 
 
 class FaRCounter(CounterBase):

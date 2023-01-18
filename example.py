@@ -1,7 +1,5 @@
-from baselines import *
-from data import *
-from data import StreamDataLoader
-from tester import RecTester
+from batcore import StreamDataLoader
+from batcore import RecTester
 import pandas as pd
 
 pd.options.mode.chained_assignment = None

@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from RecommenderBase.recommender import BanRecommenderBase
+from batcore.RecommenderBase.recommender import BanRecommenderBase
 
 
 class ACRec(BanRecommenderBase):

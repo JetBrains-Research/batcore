@@ -3,7 +3,7 @@ from datetime import datetime
 
 import numpy as np
 
-from RecommenderBase.recommender import BanRecommenderBase
+from batcore.RecommenderBase.recommender import BanRecommenderBase
 
 
 class xFinder(BanRecommenderBase):

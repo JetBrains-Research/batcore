@@ -1,5 +1,5 @@
-from data import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
-from data import PullLoader, PullLoaderAliasTest
+from batcore import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
+from batcore import PullLoader
 
 model_setup = {
     'ACRec': {'item2id': False,
