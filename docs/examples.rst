@@ -81,6 +81,7 @@ To create new mode one can simply implement abstract class RecommenderBase with 
 * `predict` is methods that returns list of candidates to review give pull request `pull`
 
 For any model implementing those two methods testing can be done the same way as with implemented baselines. The only exception is changing dataset initialization from `get_gerrit_dataset` to manual initialization. A simple example of the recommender implementation can be found below:
+
 .. code-block:: python
 
     from batcore.modelbase import RecommenderBase
@@ -96,6 +97,3 @@ For any model implementing those two methods testing can be done the same way as
 
         def fit(self, data):
             self.reviewers.extend(event['reviewer'])
-
-
-
