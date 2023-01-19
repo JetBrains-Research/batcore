@@ -4,12 +4,12 @@
 Base Classes for Models
 =======================
 
-.. autoclass:: batcore.RecommenderBase.recommender.RecommenderBase
+.. autoclass:: batcore.modelbase.recommender.RecommenderBase
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.RecommenderBase.recommender.BanRecommenderBase
+.. autoclass:: batcore.modelbase.recommender.BanRecommenderBase
    :members:
    :no-undoc-members:
    :exclude-members:

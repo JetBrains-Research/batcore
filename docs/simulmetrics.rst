@@ -4,22 +4,22 @@
 Metrics for Simulated History
 =============================
 
-.. autoclass:: batcore.Counter.CounterBase.CounterBase
+.. autoclass:: batcore.counter.CounterBase.CounterBase
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.Counter.CoreWorkloadCounter.CoreWorkloadCounter
+.. autoclass:: batcore.counter.CoreWorkloadCounter.CoreWorkloadCounter
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.Counter.ExpertiseCounter.ExpertiseCounter
+.. autoclass:: batcore.counter.ExpertiseCounter.ExpertiseCounter
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.Counter.FaRCounter.FaRCounter
+.. autoclass:: batcore.counter.FaRCounter.FaRCounter
    :members:
    :no-undoc-members:
    :exclude-members:
