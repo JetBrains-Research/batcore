@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.modelbase.recommender import BanRecommenderBase
 from ..utils import norm, sim
 
 

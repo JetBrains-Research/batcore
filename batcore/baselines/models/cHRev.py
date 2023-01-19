@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 
-from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.modelbase.recommender import BanRecommenderBase
 
 
 class cHRev(BanRecommenderBase):

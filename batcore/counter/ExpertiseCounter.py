@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from batcore.Counter.CounterBase import CounterBase
+from batcore.counter.CounterBase import CounterBase
 
 
 class ExpertiseCounter(CounterBase):

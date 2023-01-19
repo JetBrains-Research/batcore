@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import numpy as np
 
-from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.modelbase.recommender import BanRecommenderBase
 from ..utils import get_map, pull_sim
 
 

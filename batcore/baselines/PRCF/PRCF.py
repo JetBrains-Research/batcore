@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy as np
 from scipy.sparse import dok_matrix
 
-from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.modelbase.recommender import BanRecommenderBase
 from batcore.baselines.PRCF.utils import pearson, LCP
 
 

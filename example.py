@@ -1,5 +1,8 @@
-from batcore import StreamDataLoader
-from batcore import RecTester
+from batcore.data import PullLoader
+from batcore.tester import RecTester
+from batcore.data import GerritLoader
+from batcore.baselines import *
+from batcore.data import get_gerrit_dataset
 import pandas as pd
 
 pd.options.mode.chained_assignment = None
@@ -25,7 +28,7 @@ if __name__ == '__main__':
     dataset = get_gerrit_dataset(data, max_file=56, model_cls=RevRec)
 
     # creates an iterator over dataset that iterates over pull request one-by-one
-    data_iterator = StreamDataLoader(dataset, 10)
+    data_iterator = PullLoader(dataset, 10)
 
     # create a CN model. dataset.get_items2ids() provides model with necessary encodings (eg. users2id, files2id) for
     # optimization of evaluation

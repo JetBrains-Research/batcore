@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from batcore.AliasMatching.utils import get_clusters
+from batcore.alias.utils import get_clusters
 from batcore.data.utils import time_interval, user_id_split, is_bot
 
 

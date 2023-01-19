@@ -3,7 +3,7 @@ from datetime import datetime
 
 import numpy as np
 
-from batcore.Counter.CounterBase import CounterBase
+from batcore.counter.CounterBase import CounterBase
 
 
 class FileInfo:

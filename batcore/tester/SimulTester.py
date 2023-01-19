@@ -4,8 +4,8 @@ from copy import deepcopy
 
 from tqdm import tqdm
 
-from batcore.Counter import CoreWorkloadCounter
-from batcore.Counter import FaRCounter, ExpertiseCounter
+from batcore.counter import CoreWorkloadCounter
+from batcore.counter import FaRCounter, ExpertiseCounter
 from batcore.tester.TesterBase import TesterBase
 
 

@@ -2,7 +2,7 @@ import ast
 from collections import defaultdict
 import numpy as np
 
-from batcore.RecommenderBase.recommender import BanRecommenderBase
+from batcore.modelbase.recommender import BanRecommenderBase
 from ..utils import LCP, path2list
 
 
