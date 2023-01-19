@@ -13,3 +13,4 @@ Contents
    simulmetrics
    data
    dataloader
+   examples
