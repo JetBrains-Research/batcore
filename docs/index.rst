@@ -10,7 +10,9 @@ Contents
    basemodels
    models
    tester
+   recmetrics
    simulmetrics
    data
    dataloader
    examples
+
