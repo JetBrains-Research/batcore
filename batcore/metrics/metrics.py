@@ -112,8 +112,7 @@ def accuracy(gt, pred):
 
 def count_topk_metric(res, top_k, metric, name='metric'):
     """
-    :param res: pd.DataFrame with prediction done by the model. Column 'rev' represents ground truth. Column 'top-k'
-    represents best k suggestions
+    :param res: pd.DataFrame with prediction done by the model. Column 'rev' represents ground truth. Column 'top-k' represents best k suggestions
     :param top_k: list with amount of the best suggestions
     :param metric: metric function
     :param name: name of the metric
