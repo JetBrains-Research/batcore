@@ -5,9 +5,6 @@ Recommendation System Metrics
 =============================
 
 .. autofunction:: batcore.metrics.bootstrap_estimation
-   :members:
-   :no-undoc-members:
-   :exclude-members:
 
 .. autoclass:: batcore.metrics.count_topk_metric
    :members:
