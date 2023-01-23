@@ -1,5 +1,4 @@
-from batcore import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset
-from batcore import PullLoader
+from batcore.data import StandardDataset, RevFinderDataset, RevRecDataset, TieDataset, PullLoader
 
 model_setup = {
     'ACRec': {'item2id': False,
@@ -43,7 +42,7 @@ model_setup = {
             'dataset': 'standard',
             'dataset_kwargs': {'user_items': True, 'file_items': True},
             'iterator': 'batch',
-            'iterator_kwargs': {'batch_size': 50}},
+            'iterator_kwargs': {'batch_size': 1}},
     'xFinder': {'item2id': False,
                 'model_kwargs': {},
                 'dataset': 'standard',

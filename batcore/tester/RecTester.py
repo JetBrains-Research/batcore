@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -35,8 +36,8 @@ class RecTester(TesterBase):
                 y_pred = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer_login'], test_data['key_change']]]
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev', 'key'])
                 self.recs.append(y_pred)
-            # if cnt > 5:
-            #     break
+            if cnt > 5:
+                break
         # print(cnt)
 
         recs = pd.concat(self.recs, axis=0)
@@ -76,6 +77,9 @@ class RecTesterAliasTest(TesterBase):
                           test_data['key_change']]]
                 preds = pd.DataFrame(preds, columns=[*[f'top-{n}' for n in top_ns], 'rev', 'filter_flag', 'key'])
                 self.recs.append(preds)
+            if cnt > 50:
+                print(np.mean(recommender.log))
+                break
 
         recs = pd.concat(self.recs, axis=0)
         recs_filtered = recs[~recs.filter_flag]
