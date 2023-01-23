@@ -4,7 +4,7 @@
 Recommendation System Metrics
 =============================
 
-.. autoclass:: batcore.metrics.bootstrap_estimation
+.. autofunction:: batcore.metrics.bootstrap_estimation
    :members:
    :no-undoc-members:
    :exclude-members:
