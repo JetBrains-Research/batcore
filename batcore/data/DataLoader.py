@@ -28,7 +28,11 @@ class StreamLoaderBase(LoaderBase, ABC):
 
     def __init__(self, dataset):
         super().__init__(dataset)
-        self.data = deepcopy(dataset.data)
+        data = []
+        for event_type in dataset.data:
+            data += dataset.data[event_type].to_dict('records')
+        data = sorted(data, key=lambda x: x['date'])
+        self.data = deepcopy(data)
 
     def __iter__(self):
         self.ind = 0

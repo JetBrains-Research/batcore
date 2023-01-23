@@ -1,6 +1,9 @@
 import re
 import numpy as np
+import pandas as pd
 from nltk import LancasterStemmer
+
+from batcore.alias.utils import get_clusters
 
 stemmer = LancasterStemmer()
 
@@ -141,3 +144,57 @@ def is_bot(x, project=''):
         return True
 
     return False
+
+
+def preprocess_users(data, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1):
+    u1 = pd.unique(data.pulls.owner.sum())
+    u2 = pd.unique(data.pulls.reviewer_login.sum())
+    u3 = pd.unique(data.commits.key_user)
+    u4 = pd.unique(data.comments.key_user)
+
+    users = np.unique(np.hstack((u1, u2, u3, u4)))
+
+    if remove_bots:
+        if bots != 'auto':
+            bots = pd.read_csv(bots).fillna('')
+            bots = bots.apply(lambda x: f'{x["name"]}:{x["email"]}:{x["login"]}', axis=1)
+            bots = set(bots)
+        else:
+            bots = set([u for u in users if is_bot(u, project_name)])
+
+        users = np.array([u for u in users if u not in bots])
+
+        data.pulls['owner'] = data.pulls['owner'].apply(lambda x: [u for u in x if u not in bots])
+        data.pulls['reviewer_login'] = data.pulls['reviewer_login'].apply(lambda x: [u for u in x if u not in bots])
+        data.pulls['author'] = data.pulls['author'].apply(lambda x: [u for u in x if u not in bots])
+
+        data.pulls = data.pulls[data.pulls.owner.apply(lambda x: len(x) > 0)]
+        data.pulls = data.pulls[data.pulls.reviewer_login.apply(lambda x: len(x) > 0)]
+
+        data.commits['key_user'] = data.commits['key_user'].apply(lambda x: np.nan if x in bots else x)
+        data.comments['key_user'] = data.comments['key_user'].apply(lambda x: np.nan if x in bots else x)
+
+        data.comments = data.comments[~data.comments.key_user.isna()]
+        data.commits = data.commits[~data.commits.key_user.isna()]
+
+    if factorize_users:
+        if alias:
+            users_parts = [user_id_split(s) for s in users]
+
+            users_df = pd.DataFrame({'email': [u[1] for u in users_parts],
+                                     'name': [u[0] for u in users_parts],
+                                     'login': [u[2] for u in users_parts],
+                                     'initial_id': [u for u in users]})
+            clusters = get_clusters(users_df, distance_threshold=threshold)
+        else:
+            clusters = {u: i for i, u in enumerate(users)}
+
+        data.clusters = clusters
+        data.pulls.owner = data.pulls.owner.apply(lambda x: list(set([clusters[u] for u in x])))
+        data.pulls.author = data.pulls.author.apply(lambda x: list(set([clusters[u] for u in x])))
+        data.pulls.reviewer_login = data.pulls.reviewer_login.apply(lambda x: list(set([clusters[u] for u in x])))
+
+        data.commits.key_user = data.commits.key_user.apply(lambda x: clusters[x])
+        data.comments.key_user = data.comments.key_user.apply(lambda x: clusters[x])
+
+        return clusters

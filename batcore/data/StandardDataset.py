@@ -1,9 +1,12 @@
+import os
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 
+from batcore.alias.utils import get_clusters
 from batcore.data.DatasetBase import DatasetBase
-from batcore.data.utils import ItemMap
+from batcore.data.utils import ItemMap, is_bot, user_id_split, preprocess_users
 
 
 class StandardDataset(DatasetBase):
@@ -23,10 +26,14 @@ class StandardDataset(DatasetBase):
         * author_no_na - commit authors of the pull are treated as owners. pulls without an author are removed
         * author_owner_fallback - if pull has author, owner field set to the author. Otherwise, nothing is done
     :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
+    :param factorize_users: when true users are replaced by id
+    :param alias: True if clustering of the users by name should be performed
+    :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined automatically. Otherwise, path to the csv with bot accounts should be specified
+    :param project_name: name of the project for automatic bot detection
     """
 
     def __init__(self,
-                 dataset,
+                 dataset=None,
                  max_file=100,
                  commits=False,
                  comments=False,
@@ -35,9 +42,19 @@ class StandardDataset(DatasetBase):
                  pull_items=False,
                  remove_empty=False,
                  owner_policy='author_owner_fallback',
-                 remove='none'
+                 remove='none',
+                 process_users=True,
+                 factorize_users=True,
+                 alias=False,
+                 remove_bots=True,
+                 bots='auto',
+                 project_name='',
+                 from_checkpoint=False,
+                 checkpoint_path=None
                  ):
 
+        if from_checkpoint:
+            self.from_checkpoint(checkpoint_path)
         if remove == 'none':
             remove = ['owner']
 
@@ -45,6 +62,9 @@ class StandardDataset(DatasetBase):
         self.max_file = max_file
         self.commits = commits
         self.comments = comments
+
+        if process_users:
+            preprocess_users(dataset, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1)
 
         self.user_items = user_items
         if self.user_items:
@@ -80,14 +100,9 @@ class StandardDataset(DatasetBase):
         if self.comments:
             comments = self.get_comments(dataset)
             events['comments'] = comments
-        data = []
-        for event_type in events:
-            data += events[event_type].to_dict('records')
-        data = sorted(data, key=lambda x: x['date'])
 
-        self.additional_preprocessing(events, data)
-        self.events = events
-        return data
+        self.additional_preprocessing(events)
+        return events
 
     def get_pulls(self, dataset):
         """
@@ -101,7 +116,7 @@ class StandardDataset(DatasetBase):
         self.bad_pulls = set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change'])
 
         if self.remove_empty:
-        # remember pull w/out reviewers
+            # remember pull w/out reviewers
             self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change']))
 
         # remove big pulls and pull w/out reviewers
@@ -171,6 +186,15 @@ class StandardDataset(DatasetBase):
             user_list += events['commits']['key_user'].to_list()
         self.users = ItemMap(user_list)
 
+        if 'pulls' in events:
+            pulls = events['pulls']
+            pulls['reviewer_login'] = pulls['reviewer_login'].apply(lambda x: [self.users.getid(u) for u in x])
+            pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
+        if 'comments' in events:
+            events['comments']['key_user'] = events['comments']['key_user'].apply(lambda x: self.users.getid(x))
+        if 'commits' in events:
+            events['commits']['key_user'] = events['commits']['key_user'].apply(lambda x: self.users.getid(x))
+
     def itemize_pulls(self, events):
         """
         creates pull2id map from events
@@ -183,7 +207,7 @@ class StandardDataset(DatasetBase):
         """
         self.files = ItemMap(events['pulls']['file_path'].sum())
 
-    def additional_preprocessing(self, events, data):
+    def additional_preprocessing(self, events):
         """
         creates all item2id maps
         """
@@ -210,3 +234,20 @@ class StandardDataset(DatasetBase):
         if self.file_items:
             ret['files'] = self.files
         return ret
+
+    def from_checkpoint(self, path):
+        raise NotImplementedError
+
+    def to_checkpoint(self, path):
+        """
+        saves dataset
+
+        :param path: path to the folder to save results
+        """
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        self.data['pulls'].to_csv(path + '/pulls.csv')
+        self.data['commits'].to_csv(path + '/commits.csv')
+        self.data['comments'].to_csv(path + '/comments.csv')

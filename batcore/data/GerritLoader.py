@@ -17,55 +17,29 @@ class GerritLoader:
         :param from_date: all events before from_date are removed from the data
         :param to_date: all events after to_date are removed from the data
         :param from_checkpoint: set to True to load saved dataset
-        :param factorize_users: when true users are replaced by id
-        :param alias: True if clustering of the users by name should be performed
-        :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined automatically. Otherwise, path to the csv with bot accounts should be specified
-        :param project_name: name of the project for automatic bot detection
        """
 
-    def __init__(self, path, from_date=None, to_date=None,
+    def __init__(self, path,
+                 from_date=None,
+                 to_date=None,
                  from_checkpoint=False,
-                 process_users=False,
-                 factorize_users=True, alias=False,
-                 remove_bots=True, bots='auto',
-                 project_name=''):
+                 ):
 
         if from_checkpoint:
-            self.pulls = pd.read_csv(path + '/pulls.csv', index_col=0)
-            self.pulls.date = pd.to_datetime(self.pulls.date).dt.tz_localize(None)
-
-            self.pulls.file_path = self.pulls.file_path.apply(ast.literal_eval)
-            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval)
-
-            self.pulls.owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
-            self.pulls.author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
-
-            self.pulls = self.pulls.fillna('')
-
-            try:
-                self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
-                self.pulls.author = self.pulls.author.apply(
-                    lambda x: [int(i) for i in x])
-            except ValueError:
-                pass
-
-            self.commits = pd.read_csv(path + '/commits.csv', index_col=0)
-            self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
-            self.comments = pd.read_csv(path + '/comments.csv', index_col=0)
-            self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
+            self.from_checkpoint(path)
         else:
 
             self.from_date = from_date
             self.to_date = to_date
 
-            self.factorize = factorize_users
+            # self.factorize = factorize_users
 
             data = GerritLoader.get_df(path)
             self.pulls, self.commits, self.comments = self.prepare(data)
             self.prepare_pulls()
 
-            if process_users:
-                self.prepare_users(remove_bots, bots, factorize_users, alias, project_name)
+            # if process_users:
+            #     self.prepare_users(remove_bots, bots, factorize_users, alias, project_name)
 
     @staticmethod
     def get_df(path):
@@ -170,62 +144,7 @@ class GerritLoader:
 
         comments = pd.concat((comments_pull, comments_file), axis=0).reset_index().drop(['index'], axis=1)
 
-        # users
         return pulls, commits, comments
-
-    def prepare_users(self, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1):
-        u1 = pd.unique(self.pulls.owner.sum())
-        u2 = pd.unique(self.pulls.reviewer_login.sum())
-        u3 = pd.unique(self.commits.key_user)
-        u4 = pd.unique(self.comments.key_user)
-
-        users = np.unique(np.hstack((u1, u2, u3, u4)))
-
-        if remove_bots:
-            if bots != 'auto':
-                bots = pd.read_csv(bots).fillna('')
-                bots = bots.apply(lambda x: f'{x["name"]}:{x["email"]}:{x["login"]}', axis=1)
-                bots = set(bots)
-            else:
-                bots = set([u for u in users if is_bot(u, project_name)])
-
-            users = np.array([u for u in users if u not in bots])
-
-            self.pulls['owner'] = self.pulls['owner'].apply(lambda x: [u for u in x if u not in bots])
-            self.pulls['reviewer_login'] = self.pulls['reviewer_login'].apply(lambda x: [u for u in x if u not in bots])
-            self.pulls['author'] = self.pulls['author'].apply(lambda x: [u for u in x if u not in bots])
-
-            self.pulls = self.pulls[self.pulls.owner.apply(lambda x: len(x) > 0)]
-            self.pulls = self.pulls[self.pulls.reviewer_login.apply(lambda x: len(x) > 0)]
-
-            self.commits['key_user'] = self.commits['key_user'].apply(lambda x: np.nan if x in bots else x)
-            self.comments['key_user'] = self.comments['key_user'].apply(lambda x: np.nan if x in bots else x)
-
-            self.comments = self.comments[~self.comments.key_user.isna()]
-            self.commits = self.commits[~self.commits.key_user.isna()]
-
-        if factorize_users:
-            if alias:
-                users_parts = [user_id_split(s) for s in users]
-
-                users_df = pd.DataFrame({'email': [u[1] for u in users_parts],
-                                         'name': [u[0] for u in users_parts],
-                                         'login': [u[2] for u in users_parts],
-                                         'initial_id': [u for u in users]})
-                clusters = get_clusters(users_df, distance_threshold=threshold)
-            else:
-                clusters = {u: i for i, u in enumerate(users)}
-
-            self.clusters = clusters
-            self.pulls.owner = self.pulls.owner.apply(lambda x: [clusters[u] for u in x])
-            self.pulls.author = self.pulls.author.apply(lambda x: [clusters[u] for u in x])
-            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: [clusters[u] for u in x])
-            self.commits.key_user = self.commits.key_user.apply(lambda x: clusters[x])
-            self.comments.key_user = self.comments.key_user.apply(lambda x: clusters[x])
-
-            # self.pulls = self.pulls.dropna()
-            # self.comments = self.comments.dropna()
-            # self.commits = self.commits.dropna()
 
     def prepare_pulls(self):
         """
@@ -255,6 +174,30 @@ class GerritLoader:
         pull_authors = self.commits.groupby('key_change').agg({'key_user': lambda x: set(x)}).reset_index()
         pull_authors = pull_authors.rename({'key_user': 'author'}, axis=1)
         self.pulls = self.pulls.merge(pull_authors, on='key_change', how='left')
+
+    def from_checkpoint(self, path):
+        self.pulls = pd.read_csv(path + '/pulls.csv', index_col=0)
+        self.pulls.date = pd.to_datetime(self.pulls.date).dt.tz_localize(None)
+
+        self.pulls.file_path = self.pulls.file_path.apply(ast.literal_eval)
+        self.pulls.reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval)
+
+        self.pulls.owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
+        self.pulls.author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
+
+        self.pulls = self.pulls.fillna('')
+
+        try:
+            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+            self.pulls.author = self.pulls.author.apply(
+                lambda x: [int(i) for i in x])
+        except ValueError:
+            pass
+
+        self.commits = pd.read_csv(path + '/commits.csv', index_col=0)
+        self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
+        self.comments = pd.read_csv(path + '/comments.csv', index_col=0)
+        self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
 
     def to_checkpoint(self, path):
         """
