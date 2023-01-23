@@ -77,9 +77,9 @@ class RecTesterAliasTest(TesterBase):
                           test_data['key_change']]]
                 preds = pd.DataFrame(preds, columns=[*[f'top-{n}' for n in top_ns], 'rev', 'filter_flag', 'key'])
                 self.recs.append(preds)
-            if cnt > 50:
-                print(np.mean(recommender.log))
-                break
+            # if cnt > 50:
+            #     # print(np.mean(recommender.log))
+            #     break
 
         recs = pd.concat(self.recs, axis=0)
         recs_filtered = recs[~recs.filter_flag]

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def count_confidence(sample):
@@ -43,17 +44,18 @@ def bootstrap_estimation(metric_vals, bootstrap_size=50, bootstrap_repeat=1000):
     return real_mean, bt_var
 
 
-def count_mrr(res):
+def count_mrr(gt, pred):
     """
-    :param res: pd.DataFrame with prediction done by the model. Should have column 'rev' that represents ground truth.
-    Also column 'top-10' that represents best 10 suggestions
+    :param gt: ground truth
+    :param pred: predictions
     :return: mean and std of reciprocal ranks
     """
     rrs = []
-    for _, row in res.iterrows():
+    df = pd.DataFrame({'gt': gt, 'pred': pred})
+    for _, row in df.iterrows():
         rr = [np.inf]
-        for t in row['rev']:
-            rr = min(rr, 1 + np.where(np.array(row['top-10']) == t)[0])
+        for t in row['gt']:
+            rr = min(rr, 1 + np.where(np.array(row['pred']) == t)[0])
         rrs.append(1 / rr[0])
 
     return {'mrr': bootstrap_estimation(rrs)}
@@ -147,7 +149,7 @@ def count_metrics(res, metrics=None, top_k=None):
     result = {}
     for metric in metrics:
         if metric == 'mrr':
-            result.update(count_mrr(res))
+            result.update(count_mrr(res['rev'], res['top-10']))
         else:
             result.update(count_topk_metric(res, top_k, metric_func[metric], metric))
     return result

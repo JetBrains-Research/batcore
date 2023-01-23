@@ -43,7 +43,7 @@ class StandardDataset(DatasetBase):
                  remove_empty=False,
                  owner_policy='author_owner_fallback',
                  remove='none',
-                 process_users=True,
+                 process_users=False,
                  factorize_users=True,
                  alias=False,
                  remove_bots=True,
