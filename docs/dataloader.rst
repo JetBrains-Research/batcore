@@ -4,17 +4,17 @@
 DataLoader Classes
 ==================
 
-.. autoclass:: batcore.data.DataLoader.LoaderBase
+.. autoclass:: batcore.data.LoaderBase
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.data.DataLoader.PullLoader
+.. autoclass:: batcore.data.PullLoader
    :members:
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.data.DataLoader.PullLoaderAliasTest
+.. autoclass:: batcore.data.PullLoaderAliasTest
    :members:
    :no-undoc-members:
    :exclude-members:
