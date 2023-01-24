@@ -63,6 +63,8 @@ def count_mrr(gt, pred):
 
 def recall(gt, pred):
     """
+    `BPR: Bayesian Personalized Ranking from Implicit Feedback <https://arxiv.org/pdf/1205.2618.pdf>`_.
+
     :param gt: ground truth
     :param pred: predictions
     :return: Recall score
