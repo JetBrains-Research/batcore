@@ -46,6 +46,8 @@ def bootstrap_estimation(metric_vals, bootstrap_size=50, bootstrap_repeat=1000):
 
 def count_mrr(gt, pred):
     """
+    Calculates `mean reciprocal rank (mrr) <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_ of the given predictions wrt ground truth.
+
     :param gt: ground truth
     :param pred: predictions
     :return: mean and std of reciprocal ranks
@@ -63,7 +65,7 @@ def count_mrr(gt, pred):
 
 def recall(gt, pred):
     """
-    `BPR: Bayesian Personalized Ranking from Implicit Feedback <https://arxiv.org/pdf/1205.2618.pdf>`_.
+    Calculates `recall <https://en.wikipedia.org/wiki/Precision_and_recall>`_ of the given predictions wrt ground truth.
 
     :param gt: ground truth
     :param pred: predictions
@@ -78,6 +80,9 @@ def recall(gt, pred):
 
 def precision(gt, pred):
     """
+    Calculates `precision <https://en.wikipedia.org/wiki/Accuracy_and_precision#In_binary_classification>`_ of the given predictions wrt ground truth.
+
+
     :param gt: ground truth
     :param pred: predictions
     :return: precision score
@@ -91,6 +96,8 @@ def precision(gt, pred):
 
 def f1score(gt, pred):
     """
+    Calculates `F1-score <https://en.wikipedia.org/wiki/F-score>`_ of the given predictions wrt ground truth.
+
     :param gt: ground truth
     :param pred: predictions
     :return: F1 score
@@ -102,6 +109,8 @@ def f1score(gt, pred):
 
 def accuracy(gt, pred):
     """
+    Calculates `accuracy <https://en.wikipedia.org/wiki/Precision_and_recall>`_ of the given predictions wrt ground truth.
+
     :param gt: ground truth
     :param pred: predictions
     :return: accuracy score
