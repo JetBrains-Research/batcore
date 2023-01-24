@@ -14,7 +14,7 @@ class xFinder(BanRecommenderBase):
 
     dataset - StandardDataset(data, commits=True)
 
-    Paper: "Assigning change requests to software developers"
+    Paper: `Assigning change requests to software developers <https://onlinelibrary.wiley.com/doi/abs/10.1002/smr.530>`_
 
     :param no_owner: flag to add or remove owners of the pull request from the recommendations
     :param no_inactive: flag to add or remove inactive reviewers from recommendations
