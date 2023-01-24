@@ -12,8 +12,7 @@ class ACRec(BanRecommenderBase):
 
     dataset - StandardDataset(data, comments=True)
 
-    Paper: "Who Should Comment on This Pull Request? Analyzing Attributes for More Accurate
-    Commenter Recommendation in Pull-Based Development"
+    Paper: `Who Should Comment on This Pull Request? Analyzing Attributes for More Accurate Commenter Recommendation in Pull-Based Development <https://www.sciencedirect.com/science/article/abs/pii/S095058491630283X?via%3Dihub>`_
 
     :param gamma: number of days to pass for a pull request to ignored during predictions
     :param lambd: time-decaying parameter
