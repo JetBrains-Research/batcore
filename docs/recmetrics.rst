@@ -6,37 +6,16 @@ Recommendation System Metrics
 
 .. autofunction:: batcore.metrics.bootstrap_estimation
 
-.. autoclass:: batcore.metrics.count_topk_metric
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.count_topk_metric
 
-.. autoclass:: batcore.metrics.count_mrr
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.count_mrr
 
-.. autoclass:: batcore.metrics.recall
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.recall
 
-.. autoclass:: batcore.metrics.precision
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.precision
 
-.. autoclass:: batcore.metrics.accuracy
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.accuracy
 
-.. autoclass:: batcore.metrics.f1score
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.f1score
 
-.. autoclass:: batcore.metrics.count_metrics
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.metrics.count_metrics
