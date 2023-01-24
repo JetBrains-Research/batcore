@@ -9,9 +9,7 @@ class cHRev(BanRecommenderBase):
     cHRev recommends candidates based on their commenting history. For this xFactor is calculated which measures
     relative portion and time recency of comments done by a candidate to the files
 
-    dataset - StandardDataset(data, comments=True)
-
-    Paper: "Automatically Recommending Peer Reviewers in Modern Code Review"
+    Paper: `Automatically Recommending Peer Reviewers in Modern Code Review <https://ieeexplore.ieee.org/document/7328331>`_
 
     :param no_owner: flag to add or remove owners of the pull request from the recommendations
     :param no_inactive: flag to add or remove inactive reviewers from recommendations

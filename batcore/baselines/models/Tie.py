@@ -14,9 +14,7 @@ class Tie(BanRecommenderBase):
     on path distance between files in current pr and previously reviewed file. Second is a score from naive Bayes
     classifier trained on the titles of prs.
 
-    dataset - TieDataset(data)
-    Paper: "Who Should Review This Change? Putting Text and File Location Analyses Together for More Accurate
-    Recommendations"
+    Paper: `Who Should Review This Change? Putting Text and File Location Analyses Together for More Accurate Recommendations <https://xin-xia.github.io/publication/icsme15.pdf>`_
 
     :param item_list: dict with word_list and reviewer_list
     :param text_splitter: a function to parse pull comments

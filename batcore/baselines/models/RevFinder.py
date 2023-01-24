@@ -15,11 +15,7 @@ class RevFinder(BanRecommenderBase):
     4 different file similarities metrics. For each metric list of suggestions is calculated, and then they are
     combined into one
 
-
-    dataset - RevFinderDataset(data)
-
-    Paper : "Who Should Review My Code? A File Location-Based Code-Reviewer Recommendation Approach for Modern
-    Code Review"
+    Paper: `Who Should Review My Code? A File Location-Based Code-Reviewer Recommendation Approach for Modern Code Review <https://ieeexplore.ieee.org/document/7081824>`_
 
     :param items2ids: dict with all possible reviewers
     :param max_date: time in days after which old reviews stop influence predictions

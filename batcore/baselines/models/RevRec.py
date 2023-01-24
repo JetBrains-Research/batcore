@@ -13,9 +13,7 @@ class RevRec(BanRecommenderBase):
     RevRec finds best set of reviewers based on the two metrics: group expertise on modified files and amount of
     collaborations with pull request submitter. The search for the best set is performed via genetic algorithm
 
-    dataset - RevRecDataset(data, comments=True, user_items=True)
-
-    Paper: "Search-Based Peer Reviewers Recommendation in Modern Code Review"
+    Paper: `Search-Based Peer Reviewers Recommendation in Modern Code Review <https://ieeexplore.ieee.org/document/7816482>`_
 
     :param items2ids: dict with users2ids
     :param k: threshold for files similarity

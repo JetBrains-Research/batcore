@@ -16,9 +16,7 @@ class CN(BanRecommenderBase):
     constructed). Vertices are developers in the project and edges represents weighted number of reviewing
     interactions. Scores to each candidate are assigned based on the distance in graph
 
-    dataset - StandardDataset(data, comments=True, user_items=True)
-
-    Paper: "Reviewer Recommendation for Pull-Requests in GitHub: What Can We Learn from Code Review and Bug Assignment?"
+    Paper: `Reviewer Recommendation for Pull-Requests in GitHub: What Can We Learn from Code Review and Bug Assignment? <https://www.researchgate.net/profile/Yue-Yu-126/publication/291140377_Reviewer_Recommendation_for_Pull-Requests_in_GitHub_What_Can_We_Learn_from_Code_Review_and_Bug_Assignment/links/5a2f42a74585155b617a2177/Reviewer-Recommendation-for-Pull-Requests-in-GitHub-What-Can-We-Learn-from-Code-Review-and-Bug-Assignment.pdf>`_
 
     :param items2ids: dict with user2id
     :param lambd: weight decay coefficient for comments within a single review beyond the first one
