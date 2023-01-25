@@ -9,10 +9,7 @@ Metrics for Simulated History
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.counter.CoreWorkloadCounter
-   :members:
-   :no-undoc-members:
-   :exclude-members:
+.. autofunction:: batcore.counter.CoreWorkloadCounter
 
 .. autoclass:: batcore.counter.ExpertiseCounter
    :members:

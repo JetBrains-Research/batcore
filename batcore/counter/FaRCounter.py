@@ -1,5 +1,7 @@
+import copy
 from collections import defaultdict
 from itertools import chain
+from datetime import timedelta
 
 from batcore.counter.CounterBase import CounterBase
 
@@ -17,8 +19,6 @@ class FaRCounter(CounterBase):
         self.data = iterator.data
         self.prepare()
 
-        self.wkr = []
-
     def prepare(self):
         """
         supporting calculation for the faster metric estimation
@@ -26,11 +26,11 @@ class FaRCounter(CounterBase):
 
         for event in self.data:
             if event['type'] == 'pull':
-                for user in chain(event['reviewer_login'], event['owner']):
+                for user in chain(event['author'], event['owner']):
                     if user not in self.when_left:
-                        self.when_left[user] = event['date']
+                        self.when_left[user] = event['date'] + timedelta(30)
                     else:
-                        self.when_left[user] = max(self.when_left[user], event['date'])
+                        self.when_left[user] = max(self.when_left[user], event['date'] + timedelta(30))
 
                 for file in event['file_path']:
                     if file not in self.when_created:
@@ -55,9 +55,9 @@ class FaRCounter(CounterBase):
                     self.when_created[file] = min(self.when_created[file], event['date'])
 
                 if user not in self.when_left:
-                    self.when_left[user] = event['date']
+                    self.when_left[user] = event['date'] + timedelta(30)
                 else:
-                    self.when_left[user] = max(self.when_left[user], event['date'])
+                    self.when_left[user] = max(self.when_left[user], event['date'] + timedelta(30))
 
     def __call__(self, history, from_date=None, to_date=None):
         """
@@ -73,37 +73,39 @@ class FaRCounter(CounterBase):
         if to_date is None:
             to_date = history[-1]['date']
 
-        when_known_rev = defaultdict(lambda: {})
+        when_known = copy.deepcopy(self.when_known)
+        when_left = copy.deepcopy(self.when_left)
+
+        # when_known_rev = defaultdict(lambda: {})
+
         for pull in history:
-            for file in pull['file_path']:
-                for reviewer in pull['reviewer_login']:
-                    if reviewer not in when_known_rev[file]:
-                        when_known_rev[file][reviewer] = pull['date']
+            for reviewer in pull['reviewer_login']:
+                for file in pull['file_path']:
+                    if reviewer not in when_known[file]:
+                        when_known[file][reviewer] = pull['date']
                     else:
-                        prev = when_known_rev[file][reviewer]
-                        when_known_rev[file][reviewer] = min(pull['date'], prev)
+                        prev = when_known[file][reviewer]
+                        when_known[file][reviewer] = min(pull['date'], prev)
+
+                if reviewer not in when_left:
+                    when_left[reviewer] = pull['date'] + timedelta(30)
+                else:
+                    when_left[reviewer] = max(when_left[reviewer], pull['date'] + timedelta(30))
+
+
 
         active_dev = {}
+
         for file in self.when_created:
             if self.when_created[file] > to_date:
                 continue
             if file not in active_dev:
                 active_dev[file] = set()
-            for user in self.when_known[file]:
-                if self.when_left[user] >= to_date > self.when_known[file][user]:
+            for user in when_known[file]:
+                if when_left[user] >= to_date > when_known[file][user]:
                     active_dev[file].add(user)
-
-            for user in when_known_rev[file]:
-                try:
-                    if self.when_left[user] >= to_date > when_known_rev[file][user]:
-                        active_dev[file].add(user)
-                except Exception as e:
-                    print(file, user)
-                    raise e
 
         active_dev = {file: len(active_dev[file]) for file in active_dev}
         far = len([file for file in active_dev if active_dev[file] <= 1])
-
-        self.wkr.append(when_known_rev)
 
         return far  # , active_dev

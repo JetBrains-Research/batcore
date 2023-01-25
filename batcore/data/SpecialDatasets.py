@@ -6,7 +6,11 @@ from .utils import get_all_reviewers, get_all_words
 
 
 class RevFinderDataset(StandardDataset):
-    def additional_preprocessing(self, events, data):
+    def additional_preprocessing(self, events):
+        data = []
+        for event_type in events:
+            data += events[event_type].to_dict('records')
+        data = sorted(data, key=lambda x: x['date'])
         self.reviewers = get_all_reviewers(data)
 
     def get_items2ids(self):
@@ -15,8 +19,12 @@ class RevFinderDataset(StandardDataset):
 
 
 class RevRecDataset(StandardDataset):
-    def additional_preprocessing(self, events, data):
+    def additional_preprocessing(self, events):
         self.users = ItemMap()
+        data = []
+        for event_type in events:
+            data += events[event_type].to_dict('records')
+        data = sorted(data, key=lambda x: x['date'])
         for event in data:
             if event['type'] == 'pull':
                 for rev in event['reviewer_login']:
@@ -33,7 +41,12 @@ class RevRecDataset(StandardDataset):
 
 
 class TieDataset(StandardDataset):
-    def additional_preprocessing(self, events, data):
+    def additional_preprocessing(self, events):
+        data = []
+        for event_type in events:
+            data += events[event_type].to_dict('records')
+        data = sorted(data, key=lambda x: x['date'])
+
         self.reviewers = get_all_reviewers(data)
         self.words = get_all_words(data)
 

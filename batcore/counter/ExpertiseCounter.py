@@ -1,5 +1,6 @@
+import copy
 from collections import defaultdict
-
+from itertools import chain
 from batcore.counter.CounterBase import CounterBase
 
 
@@ -23,12 +24,12 @@ class ExpertiseCounter(CounterBase):
         for event in self.data:
             if event['type'] == 'pull':
                 for file in event['file_path']:
-                    for reviewer in event['reviewer_login']:
-                        if reviewer not in self.when_known[file]:
-                            self.when_known[file][reviewer] = event['date']
+                    for user in chain(event['owner'], event['author']):
+                        if user not in self.when_known[file]:
+                            self.when_known[file][user] = event['date']
                         else:
-                            prev = self.when_known[file][reviewer]
-                            self.when_known[file][reviewer] = min(event['date'], prev)
+                            prev = self.when_known[file][user]
+                            self.when_known[file][user] = min(event['date'], prev)
             elif event['type'] == 'commit' or event['type'] == 'comment':
                 file = event['key_file']
                 user = event['key_user']
@@ -52,6 +53,16 @@ class ExpertiseCounter(CounterBase):
         if to_date is None:
             to_date = history[-1]['date']
 
+        when_known = copy.deepcopy(self.when_known)
+        for event in history:
+            if event['type'] == 'pull':
+                for file in event['file_path']:
+                    for user in event['reviewer_login']:
+                        if user not in when_known[file]:
+                            when_known[file][user] = event['date']
+                        else:
+                            prev = when_known[file][user]
+                            when_known[file][user] = min(event['date'], prev)
         expertise = 0
         cnt = 0
         for pull in history:
@@ -66,12 +77,12 @@ class ExpertiseCounter(CounterBase):
                 continue
 
             for file in pull['file_path']:
-                if file not in self.when_known:
+                if file not in when_known:
                     continue
                 for reviewer in pull['reviewer_login']:
-                    if reviewer not in self.when_known[file]:
+                    if reviewer not in when_known[file]:
                         continue
-                    if self.when_known[file][reviewer] < pull['date']:
+                    if when_known[file][reviewer] < pull['date']:
                         files_known += 1
                         break
             expertise += files_known / len(pull['file_path'])
