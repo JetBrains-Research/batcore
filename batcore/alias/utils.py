@@ -175,6 +175,7 @@ def get_clusters(users, distance_threshold=0.1):
     """
     Adaptation of the approach from the 'Mining Email Social Networks'. Algorithm measures pair-wise similarity
     between all participants and splits them into clusters with Agglomerative clustering.
+
     :param users: dataframe with users names, e-mails, and logins
     :param distance_threshold: distance parameter for clustering
     :return: dict which provides cluster id for each user
