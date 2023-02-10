@@ -55,7 +55,10 @@ def last_name(name):
     """
     if name == '':
         return ''
-    return name.split()[-1]
+    name_parts = name.split()
+    if len(name_parts) == 1:
+        return ''
+    return name_parts[-1]
 
 
 def shorten_email(email):
@@ -102,7 +105,7 @@ def name_handle_dist(name, handle):
 
 def sim_users(u1, u2):
     """
-    similarity of two users name based on their name and e-mail
+    similarity of two users ids based on their name, e-mail, and login
     """
     # name scores
     if u1['name'] is np.nan or u2['name'] is np.nan:
@@ -174,7 +177,7 @@ def get_clusters(users, distance_threshold=0.1):
     between all participants and splits them into clusters with Agglomerative clustering.
     :param users: dataframe with users names, e-mails, and logins
     :param distance_threshold: distance parameter for clustering
-    :return: dict with provides cluster id for each user
+    :return: dict which provides cluster id for each user
     """
     users = users.drop_duplicates().reset_index().drop('index', axis=1)
     users = users.fillna('')
@@ -208,4 +211,5 @@ def get_clusters(users, distance_threshold=0.1):
 
     key2id = {x['initial_id']: x['id'] for _, x in users.iterrows()}
     key2id = defaultdict(lambda: np.nan, key2id)
+
     return key2id

@@ -14,5 +14,6 @@ Contents
    simulmetrics
    data
    dataloader
+   alias
    examples
 
