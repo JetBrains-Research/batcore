@@ -1,7 +1,7 @@
 from .models.RevFinder import RevFinder
 from .models.ACRec import ACRec
 from .models.CN import CN
-from .PRCF.PRCF import PRCF
+# from .PRCF.PRCF import PRCF
 from .models.RevRec import RevRec
 from .models.Tie import Tie
 from .models.WRC import WRC
@@ -12,7 +12,7 @@ __all__ = [
     "RevFinder",
     "ACRec",
     "CN",
-    "PRCF",
+    # "PRCF",
     "RevFinder",
     "RevRec",
     "Tie",
