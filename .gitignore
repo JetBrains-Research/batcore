@@ -10,3 +10,7 @@ other_data/Android.json
 notebooks/Counter.ipynb
 review.openstack.org
 /other_data/
+/venv/*
+**/__pycache__/*
+.DS_Store
+.vscode/*

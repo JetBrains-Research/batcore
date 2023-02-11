@@ -1,7 +1,5 @@
 # BaT CoRe: Baselines and testing framework for code reviewer recommendations
 
-
-
 ## Framework
 This repository provides a framework for testing code review recommendation algorithms.
 
@@ -26,7 +24,7 @@ yields pairs of consecutive segments of the stream - train (any set of events), 
 * **RecTester** an implementation of TesterBase that calculates metrics standard for recommendation systems (mrr, accuracy, etc)
 * **SimulTester**  an implementation of TesterBase that tester for project-based metrics on a simulated history (*Mirsaeedi, Rigby, 2020*). Metrics for the simulated testing can be found in `Counter`.
 
-An example of usage can be found in `example.py`
+An example of usage can be found in `example.py.` There are two modes to run the application; please comment/uncomment the method of your choice in the file accordingly. 
 ## Baselines
 
 Framework contains implementations of the following models (`baselines\models`)

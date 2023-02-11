@@ -4,6 +4,7 @@ from .SpecialDatasets import RevRecDataset, RevFinderDataset, TieDataset
 from .StandardDataset import StandardDataset
 from .DataLoader import *
 from .aggregators import *
+from .StreamDataLoader import StreamDataLoader
 
 __all__ = [
     "DatasetBase",
@@ -18,4 +19,5 @@ __all__ = [
     "PullLoader",
     "PullLoaderAliasTest",
     "get_gerrit_dataset",
+    "StreamDataLoader",
 ]
