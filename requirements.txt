@@ -5,11 +5,11 @@ scikit-learn~=0.24.2
 scipy~=1.6.2
 tqdm~=4.64.0
 nltk~=3.7
-levenshtein=0.20.8
-zlib~=1.2.11
+levenshtein==0.20.8
+#zlib~=1.2.11
 wheel~=0.37.1
 brotli~=1.0.9
-openssl~=1.1.1q
+#openssl~=1.1.1
 cryptography~=37.0.1
 tornado~=6.1
 setuptools~=62.1.0
