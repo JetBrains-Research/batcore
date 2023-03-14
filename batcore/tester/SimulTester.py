@@ -8,6 +8,8 @@ from batcore.counter import CoreWorkloadCounter
 from batcore.counter import FaRCounter, ExpertiseCounter
 from batcore.tester.TesterBase import TesterBase
 
+from .utils import tester_logging
+
 
 class SimulTester(TesterBase):
     """
@@ -18,6 +20,7 @@ class SimulTester(TesterBase):
         self.simulated = []
         self.real = []
 
+    @tester_logging
     def test_recommender(self,
                          recommender,
                          data_iterator,
@@ -33,13 +36,21 @@ class SimulTester(TesterBase):
         :return: list of calculated metrics
         """
 
+        self.info(f"starting evaluation")
         if metrics is None:
-            metrics = {'Core Workload': CoreWorkloadCounter,
+            metrics = {'Core Workload': CoreWorkloadCounter(),
                        'FaR': FaRCounter(data_iterator),
                        'Expertise': ExpertiseCounter(data_iterator)}
         if not from_checkpoint:
             self.simulate(recommender, data_iterator)
+            self.info(f"saving simulation to checkpoints/{dataset_name}/{type(recommender).__name__}")
             self.save(path=f'checkpoints/{dataset_name}/{type(recommender).__name__}')
+        else:
+            self.info(f"loading simulation from checkpoints/{dataset_name}/{type(recommender).__name__}")
+            self.load(path=f'checkpoints/{dataset_name}/{type(recommender).__name__}')
+
+        self.info(f"finished evaluation")
+        self.info(f"calculating metrics")
 
         result = {metric_name: self.count_metric_dif(metrics[metric_name]) for metric_name in metrics}
 
@@ -52,6 +63,7 @@ class SimulTester(TesterBase):
         :return: None. all results are gathered in real and simulated fields
         """
         cnt = 0
+        self.info(f"starting simulation")
         for i, (train_data, test_data) in tqdm(enumerate(dataset)):
             cnt += 1
             if i == 0:
@@ -71,8 +83,72 @@ class SimulTester(TesterBase):
             else:
                 self.simulated.append(test_data)
 
-            # if cnt > 200:
-            #     break
+            self.info(f"finished simulation for pull request #{cnt}")
+
+    def count_metric_dif(self, metric):
+        """
+        calculates metric on actual and simulated history and returns its relative difference
+        """
+        original_metric = metric(self.real)
+        simulated_metric = metric(self.simulated)
+        # print(original_metric, simulated_metric)
+        dif = (simulated_metric / original_metric - 1) * 100
+
+        return dif
+
+    def save(self, path='checkpoints'):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        with open(f'{path}/simulated.pkl', 'wb') as f:
+            pickle.dump(self.simulated, f)
+
+        with open(f'{path}/real.pkl', 'wb') as f:
+            pickle.dump(self.real, f)
+
+    def load(self, path='checkpoints'):
+        with open(f'{path}/simulated.pkl', 'rb') as f:
+            self.simulated = pickle.load(f)
+
+        with open(f'{path}/real.pkl', 'rb') as f:
+            self.real = pickle.load(f)
+
+
+class SimulTesterSingleSkip(SimulTester):
+    """
+    Class for testing non-recommendation metrics on a simulated history
+    """
+
+    def simulate(self, recommender, dataset):
+        """
+        :param recommender: recommender used to simulate reviewer history
+        :param dataset: dataset for which history will be simulated
+        :return: None. all results are gathered in real and simulated fields
+        """
+        cnt = 0
+        self.info(f"starting simulation")
+        for i, (train_data, test_data) in tqdm(enumerate(dataset)):
+            cnt += 1
+            if i == 0:
+                for event in train_data:
+                    if event['type'] == 'pull':
+                        self.simulated.append(event)
+                        self.real.append(event)
+
+            recommender.fit(train_data)
+
+            self.real.append(deepcopy(test_data))
+
+            if len(test_data['reviewer_login']) > 1:
+                cur_rec = recommender.predict(test_data, n=5)
+                if len(cur_rec) > 0:
+                    simulated_pull = dataset.replace(cur_rec[0])
+                    self.simulated.append(simulated_pull)
+                else:
+                    self.simulated.append(test_data)
+            else:
+                self.simulated.append(test_data)
+            self.info(f"finished simulation for pull request #{cnt}")
 
     def count_metric_dif(self, metric):
         """
@@ -112,6 +188,7 @@ class SimulTesterCheckpoint(TesterBase):
         self.simulated = []
         self.real = []
 
+    @tester_logging
     def test_recommender(self,
                          recommender,
                          data_iterator,
@@ -127,7 +204,7 @@ class SimulTesterCheckpoint(TesterBase):
         """
 
         if metrics is None:
-            metrics = {'Core Workload': CoreWorkloadCounter,
+            metrics = {'Core Workload': CoreWorkloadCounter(),
                        'FaR': FaRCounter(data_iterator),
                        'Expertise': ExpertiseCounter(data_iterator)}
         self.simulate(recommender, data_iterator, from_checkpoint)
@@ -169,8 +246,8 @@ class SimulTesterCheckpoint(TesterBase):
             else:
                 self.simulated.append(test_data)
 
-            # if cnt > 200:
-            #     break
+            if cnt > 100:
+                break
 
     def count_metric_dif(self, metric):
         """
