@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 from batcore.tester.TesterBase import TesterBase
 from batcore.metrics.metrics import count_metrics
-from .utils import tester_logging
+from batcore.bat_logging import tester_logging
 
 
 class RecTester(TesterBase):

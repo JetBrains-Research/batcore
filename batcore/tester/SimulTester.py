@@ -8,7 +8,7 @@ from batcore.counter import CoreWorkloadCounter
 from batcore.counter import FaRCounter, ExpertiseCounter
 from batcore.tester.TesterBase import TesterBase
 
-from .utils import tester_logging
+from batcore.bat_logging import tester_logging
 
 
 class SimulTester(TesterBase):
