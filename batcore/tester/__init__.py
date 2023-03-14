@@ -1,6 +1,7 @@
-from .RecTester import RecTester, RecTesterAliasTest
-from .SimulTester import SimulTester
 from .TesterBase import TesterBase
+from SimulTester import *
+from RecTester import *
+
 
 __all__ = [
     "RecTester",
