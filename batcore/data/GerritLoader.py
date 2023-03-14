@@ -4,11 +4,13 @@ import os
 import numpy as np
 import pandas as pd
 
-from batcore.alias.utils import get_clusters
-from batcore.data.utils import time_interval, user_id_split, is_bot
+from batcore.bat_logging import Logger
+from batcore.data.utils import time_interval
+
+from datetime import datetime
 
 
-class GerritLoader:
+class GerritLoader(Logger):
     """
         Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
         download script and outputs in a comfortable format
@@ -19,31 +21,41 @@ class GerritLoader:
         :param from_checkpoint: set to True to load saved dataset
        """
 
-    def __init__(self, path,
+    def __init__(self,
+                 path,
                  from_date=None,
                  to_date=None,
                  from_checkpoint=False,
+                 verbose=False,
+                 log_file_path=None,
+                 log_stdout=False,
+                 log_mode='a'
                  ):
 
+        self.setup_logger(verbose, log_file_path, log_stdout, log_mode)
         if from_checkpoint:
+            self.info(f'loading from checkpoint {path}')
             self.from_checkpoint(path)
+            self.info(f'finished loading from checkpoint {path}')
+
         else:
 
             self.from_date = from_date
             self.to_date = to_date
 
-            # self.factorize = factorize_users
-
+            self.info(f"loading gerrit data from {path}")
             data = GerritLoader.get_df(path)
+            self.info(f"processing data")
             self.pulls, self.commits, self.comments = self.prepare(data)
+            self.info(f"additional processing for the pull request")
             self.prepare_pulls()
+            self.info(f"finished processing the data")
 
-            # if process_users:
-            #     self.prepare_users(remove_bots, bots, factorize_users, alias, project_name)
 
     @staticmethod
     def get_df(path):
         """
+        reading all the csv files from MR-loader
         :param path: path to the directory with csv files
         :return: dictionary with all dataframes for pulls, commits, and comments
         """
@@ -63,6 +75,7 @@ class GerritLoader:
 
     def prepare(self, data):
         """
+        processing the data
         :param data: dictionary with all dataframes
         :return: pulls and commits dataframes with all mined features
         """

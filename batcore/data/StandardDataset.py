@@ -4,12 +4,13 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
+from batcore.bat_logging import Logger
 from batcore.data.DatasetBase import DatasetBase
 from batcore.data.utils import ItemMap, preprocess_users
 import ast
 
 
-class StandardDataset(DatasetBase):
+class StandardDataset(DatasetBase, Logger):
     """
     dataset for most of the implemented models.
 
@@ -50,11 +51,19 @@ class StandardDataset(DatasetBase):
                  bots='auto',
                  project_name='',
                  from_checkpoint=False,
-                 checkpoint_path=None
+                 checkpoint_path=None,
+                 verbose=False,
+                 log_file_path=None,
+                 log_stdout=False,
+                 log_mode='a'
                  ):
 
+        self.setup_logger(verbose, log_file_path, log_stdout, log_mode)
+
         if from_checkpoint:
+            self.info(f'loading from checkpoint {checkpoint_path}')
             self.from_checkpoint(checkpoint_path)
+            self.info(f'finished loading from checkpoint {checkpoint_path}')
         if remove == 'none':
             remove = ['owner']
 
@@ -64,8 +73,11 @@ class StandardDataset(DatasetBase):
         self.commits = commits
         self.comments = comments
 
+
         if process_users:
+            self.info(f'starting processing users')
             preprocess_users(dataset, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1)
+            self.info(f'finished processing users')
 
         self.user_items = user_items
         if self.user_items:
@@ -83,6 +95,7 @@ class StandardDataset(DatasetBase):
         self.remove = remove
         self.remove_empty = remove_empty
 
+        self.info(f'processing all data')
         super().__init__(dataset)
 
     def preprocess(self, dataset):

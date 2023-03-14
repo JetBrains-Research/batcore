@@ -6,7 +6,7 @@ import numpy as np
 
 class LoaderBase(ABC):
     """
-    Separate data iterator class that encapsulates
+    Separate data iterator class that encapsulates iteration logic
     """
 
     def __init__(self, dataset):
@@ -70,6 +70,9 @@ class StreamLoaderBase(LoaderBase, ABC):
 
 
 class StreamUntilConditionLoader(StreamLoaderBase):
+    """
+         Stream iterator that iterates until specified amount of events satisfying a condition is met
+     """
     def __init__(self, dataset, condition, batch_size=1):
         super().__init__(dataset)
         self.condition = condition
@@ -99,7 +102,8 @@ class StreamUntilConditionLoader(StreamLoaderBase):
 
 class PullLoader(StreamUntilConditionLoader):
     """
-        Stream iterator that iterates until specified amount of events of the certain type are encountered
+    Stream iterator that iterates over the data and returns batches with batch_size pull requests with at least one
+    reviewer (and all other events that it encountered)
     """
 
     def __init__(self, dataset, batch_size=1):
@@ -112,7 +116,8 @@ class PullLoader(StreamUntilConditionLoader):
 
 class PullLoaderAliasTest(StreamUntilConditionLoader):
     """
-        Stream iterator that iterates until specified amount of events of the certain type are encountered
+    Stream iterator that iterates over the data and returns batches with batch_size pull requests with at least one
+    that is not a self review reviewer (and all other events that it encountered)
     """
 
     def __init__(self, dataset, batch_size=1):
