@@ -62,9 +62,9 @@ class StreamLoaderBase(LoaderBase, ABC):
         pass
 
     def replace(self, rev):
-        l = len(self.data[self.ind + 1]['reviewer_login'])
-        self.data[self.ind + 1]['reviewer_login'] = deepcopy(self.data[self.ind + 1]['reviewer_login'])
-        self.data[self.ind + 1]['reviewer_login'][np.random.randint(l)] = rev
+        l = len(self.data[self.ind + 1]['reviewer'])
+        self.data[self.ind + 1]['reviewer'] = deepcopy(self.data[self.ind + 1]['reviewer'])
+        self.data[self.ind + 1]['reviewer'][np.random.randint(l)] = rev
 
         return self.data[self.ind + 1]
 
@@ -111,7 +111,7 @@ class PullLoader(StreamUntilConditionLoader):
 
     @staticmethod
     def _condition(pull):
-        return pull['type'] == 'pull' and (len(pull['reviewer_login']) > 0)
+        return pull['type'] == 'pull' and (len(pull['reviewer']) > 0)
 
 
 class PullLoaderAliasTest(StreamUntilConditionLoader):
@@ -125,4 +125,4 @@ class PullLoaderAliasTest(StreamUntilConditionLoader):
 
     @staticmethod
     def _condition(pull):
-        return pull['type'] == 'pull' and not pull['self_review'] and (len(pull['reviewer_login']) > 0)
+        return pull['type'] == 'pull' and not pull['self_review'] and (len(pull['reviewer']) > 0)

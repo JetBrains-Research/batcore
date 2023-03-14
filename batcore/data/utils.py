@@ -64,7 +64,7 @@ def get_all_reviewers(events):
     reviewer_set = set()
     for event in events:
         if event['type'] == 'pull':
-            for reviewer in event["reviewer_login"]:
+            for reviewer in event["reviewer"]:
                 reviewer_set.add(reviewer)
     return list(reviewer_set)
 

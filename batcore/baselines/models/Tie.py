@@ -85,7 +85,7 @@ class Tie(BanRecommenderBase):
                 pull = event
                 pull = self.update_pull(pull)
 
-                for reviewer_index in pull["reviewer_login"]:
+                for reviewer_index in pull["reviewer"]:
                     self.review_count_map[reviewer_index] = \
                         self.review_count_map.get(reviewer_index, 0) + 1
                     for word_index in pull["title"]:
@@ -106,7 +106,7 @@ class Tie(BanRecommenderBase):
                 break
 
             c = pull_sim(old_pull, pull)
-            scores[old_pull['reviewer_login']] += c
+            scores[old_pull['reviewer']] += c
 
         return scores
 
@@ -134,9 +134,9 @@ class Tie(BanRecommenderBase):
                                        self.text_splitter(pull["title"])
                                        )
                                 ))
-        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
+        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer"]]
 
         pull['title'] = word_indices
-        pull['reviewer_login'] = reviewer_indices
+        pull['reviewer'] = reviewer_indices
 
         return pull

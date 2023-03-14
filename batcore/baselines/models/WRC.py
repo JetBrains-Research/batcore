@@ -13,7 +13,7 @@ import ray
 
 def count_score(f1, pull=None, wrc=None, files=None, users=None):
     results = np.zeros(wrc.shape[1])
-    for f2 in pull['file_path']:
+    for f2 in pull['file']:
         for i in range(wrc.shape[1]):
             val = wrc[files.getid(f2), i]
             if val >= 0:
@@ -134,7 +134,7 @@ class WRC(BanRecommenderBase):
                 self.reviews.append(event)
                 self.wrc = self.delta * self.wrc
 
-                for file in event['file_path']:
+                for file in event['file']:
                     self.known_files.add(file)
                     for user in event['reviewer_login']:
                         self.wrc[self.files.getid(file), self.users.getid(user)] += 1 / len(event['reviewer_login'])

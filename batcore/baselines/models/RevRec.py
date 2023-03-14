@@ -192,7 +192,7 @@ class RevRec(BanRecommenderBase):
         cf = defaultdict(lambda: 0)
         cr = defaultdict(lambda: datetime(year=10, month=1, day=1))
 
-        for file in pull['file_path']:
+        for file in pull['file']:
             for f2 in self.com_file:
                 if sim(file, f2) > self.k:
                     for user in self.com_file[f2]:
@@ -231,7 +231,7 @@ class RevRec(BanRecommenderBase):
                 pull = event['key_change']
                 self.pull_owners[pull] = [self.users.getid(user) for user in event['owner']]
 
-                for rev in event['reviewer_login']:
+                for rev in event['reviewer']:
                     self.active_revs = max(self.active_revs, self.users.getid(rev) + 1)
 
             elif event['type'] == 'comment':
@@ -274,7 +274,7 @@ class RevRec(BanRecommenderBase):
                         self.last_active[owner] = date
                 except KeyError:
                     pass
-                for reviewer in event['reviewer_login']:
+                for reviewer in event['reviewer']:
                     self.last_active[reviewer] = date
             elif event['type'] == 'comment':
                 date = event['date']

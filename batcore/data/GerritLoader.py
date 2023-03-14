@@ -100,7 +100,7 @@ class GerritLoader(Logger):
         # remove some columns
         commits = commits.drop(
             ['oid', 'index_x', 'index_y', 'index', 'committed_date', 'lines_inserted', 'lines_deleted', 'size',
-             'size_delta', 'uploader_key_user', 'committer_key_user'], axis=1)
+             'size_delta', 'uploader_key_user', 'committer_key_user', 'status'], axis=1)
         # re-format files paths
         commits['key_file'] = commits['key_file'].apply(lambda x: x.replace(':', '/'))
 
@@ -168,13 +168,17 @@ class GerritLoader(Logger):
         self.pulls = self.pulls[
             ['file_path', 'key_change', 'reviewer_login', 'created_at', 'owner', 'comment', 'status',
              'updated_at']].rename(
-            {'created_at': 'date', 'comment': 'title', 'updated_at': 'closed'}, axis=1)
+            {'created_at': 'date',
+             'comment': 'title',
+             'updated_at': 'closed',
+             'reviewer_login': 'reviewer',
+             'file_path': 'file'}, axis=1)
 
         # group entries by pulls and aggregates reviewers
         self.pulls = self.pulls.groupby('key_change')[
-            ['file_path', 'reviewer_login', 'date', 'owner', 'title', 'status', 'closed']].agg(
-            {'file_path': lambda x: list(set(x)),
-             'reviewer_login': lambda x: list(set(x)),
+            ['file', 'reviewer', 'date', 'owner', 'title', 'status', 'closed']].agg(
+            {'file': lambda x: list(set(x)),
+             'reviewer': lambda x: list(set(x)),
              'date': lambda x: list(x)[0],
              'owner': lambda x: list(set(x)),
              'title': lambda x: list(x)[0],
@@ -192,8 +196,8 @@ class GerritLoader(Logger):
         self.pulls = pd.read_csv(path + '/pulls.csv', index_col=0)
         self.pulls.date = pd.to_datetime(self.pulls.date).dt.tz_localize(None)
 
-        self.pulls.file_path = self.pulls.file_path.apply(ast.literal_eval)
-        self.pulls.reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval)
+        self.pulls.file = self.pulls.file.apply(ast.literal_eval)
+        self.pulls.reviewer = self.pulls.reviewer.apply(ast.literal_eval)
 
         self.pulls.owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
         self.pulls.author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
@@ -201,16 +205,20 @@ class GerritLoader(Logger):
         self.pulls = self.pulls.fillna('')
 
         try:
-            self.pulls.reviewer_login = self.pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+            self.pulls.reviewer = self.pulls.reviewer.apply(lambda x: [int(i) for i in x])
             self.pulls.author = self.pulls.author.apply(
                 lambda x: [int(i) for i in x])
         except ValueError:
             pass
 
-        self.commits = pd.read_csv(path + '/commits.csv', index_col=0)
-        self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
-        self.comments = pd.read_csv(path + '/comments.csv', index_col=0)
-        self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
+        if os.path.isfile(path + '/commits.csv'):
+            self.commits = pd.read_csv(path + '/commits.csv', index_col=0)
+            self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
+        else:
+            self.commits = pd.DataFrame(columns=['key_commit', 'key_change', 'key_file', 'status', 'key_user', 'date'])
+        if os.path.isfile(path + '/comments.csv'):
+            self.comments = pd.read_csv(path + '/comments.csv', index_col=0)
+            self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
 
     def to_checkpoint(self, path):
         """

@@ -139,7 +139,7 @@ class SimulTesterSingleSkip(SimulTester):
 
             self.real.append(deepcopy(test_data))
 
-            if len(test_data['reviewer_login']) > 1:
+            if len(test_data['reviewer']) > 1:
                 cur_rec = recommender.predict(test_data, n=5)
                 if len(cur_rec) > 0:
                     simulated_pull = dataset.replace(cur_rec[0])

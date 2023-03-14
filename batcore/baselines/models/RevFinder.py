@@ -54,7 +54,7 @@ class RevFinder(BanRecommenderBase):
         end_time = pull["date"]
         start_time = end_time - timedelta(days=self.max_date)
 
-        cf1 = pull["file_path"][:500]
+        cf1 = pull["file"][:500]
 
         order_score = np.zeros(self.rev_count)
 
@@ -64,7 +64,7 @@ class RevFinder(BanRecommenderBase):
             if old_rev['date'] < start_time:
                 break
 
-            cf2 = old_rev["file_path"][:500]
+            cf2 = old_rev["file"][:500]
 
             for metric_id, metric in enumerate(metrics):
                 score = 0
@@ -74,7 +74,7 @@ class RevFinder(BanRecommenderBase):
                 if score > 0:
                     score /= len(cf1) * len(cf2)
 
-                for rev in old_rev['reviewer_login']:
+                for rev in old_rev['reviewer']:
                     rev_scores[metric_id][rev] += score
 
         final_score = np.zeros(self.rev_count)
@@ -100,9 +100,9 @@ class RevFinder(BanRecommenderBase):
     def update_pull(self, pull):
         pull = copy.deepcopy(pull)
 
-        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer_login"]]
+        reviewer_indices = [self.reviewer_map[_reviewer] for _reviewer in pull["reviewer"]]
 
-        pull['reviewer_login'] = np.array(reviewer_indices)
-        pull['file_path'] = [f.split('/') for f in pull["file_path"]]
+        pull['reviewer'] = np.array(reviewer_indices)
+        pull['file'] = [f.split('/') for f in pull["file"]]
 
         return pull

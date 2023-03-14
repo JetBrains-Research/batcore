@@ -39,7 +39,7 @@ class RecTester(TesterBase):
             recommender.fit(train_data)
             if len(test_data):
                 cur_rec = recommender.predict(test_data, n=max(top_ns))
-                y_pred = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer_login'], test_data['key_change']]]
+                y_pred = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer'], test_data['key_change']]]
                 y_pred = pd.DataFrame(y_pred, columns=[*[f'top-{n}' for n in top_ns], 'rev', 'key'])
                 self.recs.append(y_pred)
             self.info(f"finished pull request #{cnt}")
@@ -85,7 +85,7 @@ class RecTesterAliasTest(TesterBase):
                 recommender.fit(train_data)
                 if len(test_data):
                     cur_rec = recommender.predict(test_data, n=max(top_ns))
-                    preds = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer_login'], test_data[flag],
+                    preds = [[*[cur_rec[:n] for n in top_ns], test_data['reviewer'], test_data[flag],
                               test_data['key_change']]]
                     preds = pd.DataFrame(preds, columns=[*[f'top-{n}' for n in top_ns], 'rev', 'filter_flag', 'key'])
                     self.recs.append(preds)

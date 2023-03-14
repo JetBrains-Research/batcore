@@ -129,17 +129,17 @@ class StandardDataset(DatasetBase, Logger):
         # remove opened pulls. only Merged and Abandoned stay
         pulls = dataset.pulls[dataset.pulls.status != 'OPEN']
         # remember big pulls
-        # self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change']))
-        self.bad_pulls = set(pulls[pulls.file_path.apply(len) > self.max_file]['key_change'])
+        # self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.file.apply(len) > self.max_file]['key_change']))
+        self.bad_pulls = set(pulls[pulls.file.apply(len) > self.max_file]['key_change'])
 
         if self.remove_empty:
             # remember pull w/out reviewers
-            self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.reviewer_login.apply(len) == 0]['key_change']))
+            self.bad_pulls = self.bad_pulls.union(set(pulls[pulls.reviewer.apply(len) == 0]['key_change']))
 
         # remove big pulls and pull w/out reviewers
-        pulls = pulls[pulls.file_path.apply(len) <= self.max_file]
+        pulls = pulls[pulls.file.apply(len) <= self.max_file]
         if self.remove_empty:
-            pulls = pulls[pulls.reviewer_login.apply(len) > 0]
+            pulls = pulls[pulls.reviewer.apply(len) > 0]
 
         # owner estimation
         if self.owner_policy == 'author':
@@ -149,16 +149,16 @@ class StandardDataset(DatasetBase, Logger):
             pulls = pulls.dropna()
         elif self.owner_policy == 'author_owner_fallback':
             pulls.owner = pulls.apply(lambda x: x.author if len(x.author) else x.owner, axis=1)
-        elif self.owner_policy == 'none':
-            pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
+        # elif self.owner_policy == 'none':
+        #     pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
         else:
             raise ValueError(f'Wrong owner_policy {self.owner_policy}')
 
-        pulls.reviewer_login = pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+        # pulls.reviewer = pulls.reviewer.apply(lambda x: [int(i) for i in x])
 
         if len(self.remove):
             for col in self.remove:
-                pulls.reviewer_login = pulls.apply(lambda x: [rev for rev in x['reviewer_login'] if rev not in x[col]],
+                pulls.reviewer = pulls.apply(lambda x: [rev for rev in x['reviewer'] if rev not in x[col]],
                                                    axis=1)
 
         # add label
@@ -196,7 +196,7 @@ class StandardDataset(DatasetBase, Logger):
         user_list = []
         if 'pulls' in events:
             pulls = events['pulls']
-            user_list += pulls['reviewer_login'].sum() + pulls['owner'].sum()
+            user_list += pulls['reviewer'].sum() + pulls['owner'].sum()
         if 'comments' in events:
             user_list += events['comments']['key_user'].to_list()
         if 'commits' in events:
@@ -205,7 +205,7 @@ class StandardDataset(DatasetBase, Logger):
 
         # if 'pulls' in events:
             # pulls = events['pulls']
-            # pulls['reviewer_login'] = pulls['reviewer_login'].apply(lambda x: [self.users.getid(u) for u in x])
+            # pulls['reviewer'] = pulls['reviewer'].apply(lambda x: [self.users.getid(u) for u in x])
             # pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
         # if 'comments' in events:
         #     events['comments']['key_user'] = events['comments']['key_user'].apply(lambda x: self.users.getid(x))
@@ -222,7 +222,7 @@ class StandardDataset(DatasetBase, Logger):
         """
         creates file2id map from events
         """
-        self.files = ItemMap(events['pulls']['file_path'].sum())
+        self.files = ItemMap(events['pulls']['file'].sum())
 
     def additional_preprocessing(self, events):
         """
@@ -259,8 +259,8 @@ class StandardDataset(DatasetBase, Logger):
 
         self.data['pulls'].date = pd.to_datetime(self.data['pulls'].date).dt.tz_localize(None)
 
-        self.data['pulls'].file_path = self.pulls.file_path.apply(ast.literal_eval)
-        self.data['pulls'].reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval)
+        self.data['pulls'].file = self.pulls.file.apply(ast.literal_eval)
+        self.data['pulls'].reviewer = self.pulls.reviewer.apply(ast.literal_eval)
 
         self.data['pulls'].owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
         self.data['pulls'].author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
@@ -268,7 +268,7 @@ class StandardDataset(DatasetBase, Logger):
         self.data['pulls'] = self.pulls.fillna('')
 
         try:
-            self.data['pulls'].reviewer_login = self.pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+            self.data['pulls'].reviewer = self.pulls.reviewer.apply(lambda x: [int(i) for i in x])
             self.data['pulls'].author = self.pulls.author.apply(lambda x: [int(i) for i in x])
         except ValueError:
             pass

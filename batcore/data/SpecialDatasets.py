@@ -27,7 +27,7 @@ class RevRecDataset(StandardDataset):
         data = sorted(data, key=lambda x: x['date'])
         for event in data:
             if event['type'] == 'pull':
-                for rev in event['reviewer_login']:
+                for rev in event['reviewer']:
                     self.users.add2(rev)
         for user in pd.unique(events['pulls']['owner'].sum()):
             self.users.add2(user)

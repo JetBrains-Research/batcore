@@ -57,7 +57,7 @@ class xFinder(BanRecommenderBase):
         :return: at most n reviewers for the pull request
         """
         scores = defaultdict(lambda: 0)
-        for file in pull['file_path']:
+        for file in pull['file']:
             file_val = self.fv[file]
             for user in self.dv[file]:
                 user_val = self.dv[file][user]

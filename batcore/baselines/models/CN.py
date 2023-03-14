@@ -88,8 +88,8 @@ class CN(BanRecommenderBase):
                 self.pull_owner[pull] = self.users.getid(owner)
 
                 self.pull_count += 1
-                if len(event['reviewer_login']):
-                    rev_ind = np.array([self.users.getid(rev) for rev in event['reviewer_login']])
+                if len(event['reviewer']):
+                    rev_ind = np.array([self.users.getid(rev) for rev in event['reviewer']])
                     self.num_revs[rev_ind] += 1
                     self.cooc[tuple(np.meshgrid(rev_ind, rev_ind))] += 1
 
