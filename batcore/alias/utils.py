@@ -190,7 +190,7 @@ def get_clusters(users, distance_threshold=0.1):
 
     # ban_mask = ~users.apply(ban_users, axis=1, ban_list=bot_users, project=project)
     # users = users[ban_mask]
-    users = users.reset_index().drop('index', axis=1)
+    # users = users.reset_index().drop('index', axis=1)
 
     sim_matrix = get_sim_matrix(users)
     agg = AgglomerativeClustering(n_clusters=None,
