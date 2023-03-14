@@ -1,16 +1,24 @@
 import ast
+import time
 from collections import defaultdict
 import numpy as np
-
+from itertools import product
+from functools import partial
 from batcore.modelbase.recommender import BanRecommenderBase
 from ..utils import LCP, path2list
+# from multiprocessing import Pool
+from ray.util.multiprocessing import Pool
+import ray
 
 
-def count_score(f1, f2, i, wrc=None, files=None):
-    val = wrc[files.getid(f2), i]
-    if val >= 0:
-        return val * LCP(path2list(f1), path2list(f2))
-    return 0
+def count_score(f1, pull=None, wrc=None, files=None, users=None):
+    results = np.zeros(wrc.shape[1])
+    for f2 in pull['file_path']:
+        for i in range(wrc.shape[1]):
+            val = wrc[files.getid(f2), i]
+            if val >= 0:
+                results[i] += val * LCP(path2list(f1), path2list(f2))
+    return results
 
 
 class WRC(BanRecommenderBase):
@@ -20,7 +28,7 @@ class WRC(BanRecommenderBase):
 
     dataset - StandardDataset(data, user_items=True, file_items=True)
 
-    Paper : "Automatically Recommending Code Reviewers Based on Their Expertise: An Empirical Comparison"
+    Paper: `Automatically Recommending Code Reviewers Based on Their Expertise: An Empirical Comparison <https://dl.acm.org/doi/abs/10.1145/2970276.2970306>`_
 
     :param items2ids: dict with user2id and file2id
     :param delta: time decay factor for weight of the previous reviews
@@ -50,8 +58,10 @@ class WRC(BanRecommenderBase):
         self.known_files = set()
 
         # self.scores = {}
-        # self.p = Pool(5)
+        self.p = Pool(10)
+        self.pool_cnt = 0
         self.lcp_results = -np.ones((len(self.files), len(self.files)))
+        self.log = []
 
     def LCP_count(self, f1, f2):
         f1_id = self.files.getid(f1)
@@ -68,24 +78,46 @@ class WRC(BanRecommenderBase):
 
         :param n: number of reviewers to recommend
         """
-        scores = defaultdict(lambda: 0)
-        for f1 in self.known_files:
-            for f2 in pull['file_path']:
-                for i in range(self.wrc.shape[1]):
-                    val = self.wrc[self.files.getid(f2), i]
-                    if val >= 0:
-                        scores[self.users[i]] += val * self.LCP_count(f1, f2)  # LCP(path2list(f1), path2list(f2))
+        scores = np.zeros(len(self.users))
 
-        # params = product(self.known_files, pull['file_path'], range(self.wrc.shape[1]))
-        # res = [count_score(f1, f2, i, self.wrc, self.files) for f1, f2, i in params]
+        # for f1 in self.known_files:
+        #     for f2 in pull['file_path']:
+        #         for i in range(self.wrc.shape[1]):
+        #             val = self.wrc[self.files.getid(f2), i]
+        #             if val >= 0:
+        #                 scores[i] += val * LCP(path2list(f1), path2list(f2))  # self.LCP_count(f1, f2)
 
-        # res = self.p.starmap(partial(count_score, wrc=self.wrc, files=self.files),
-        #                      product(self.known_files, pull['file_path'], range(self.wrc.shape[1])))
+        # f = time.time()
+        # self.log.append(f-s)
+        # params = product(self.known_files, pull['file_path'])
+        # res = [count_score2(f1, f2, self.wrc, self.files) for f1, f2 in params]
+        # res = [count_score2(f1, f2, self.wrc, self.files) for f1, f2 in params]
+
+        # s = time.time()
+        # res = self.p.starmap(partial(count_score2, wrc=self.wrc, files=self.files),
+        #                      product(self.known_files, pull['file_path']))
         #
-        # params = product(self.known_files, pull['file_path'], range(self.wrc.shape[1]))
-        # for (f1, f2, i), r in zip(params, res):
-        #     scores[self.users[i]] += r
 
+        res = self.p.map(partial(count_score, pull=pull, wrc=self.wrc, files=self.files, users=self.users),
+                         self.known_files)
+        # # f = time.time()
+        # # print(f - s)
+        res = np.vstack(res)
+        scores = res.sum(axis=0)
+
+        self.pool_cnt += 1
+        if self.pool_cnt == 20:
+            ray.shutdown()
+            ray.init()
+            self.p = Pool(10)
+            self.pool_cnt = 0
+
+        # params = product(self.known_files, pull['file_path'], range(self.wrc.shape[1]))
+        # for (_), r in zip(params, res):
+        #     for i, v in zip(range(self.wrc.shape[1]), r):
+        #         scores[i] += v
+
+        scores = {self.users[i]: scores[i] for i in range(len(self.users))}
         self.filter(scores, pull)
         sorted_users = sorted(scores.keys(), key=lambda x: -scores[x])
 
@@ -122,4 +154,3 @@ class WRC(BanRecommenderBase):
             self.lcp_results = np.load(f)
         with open(f"{path}/files.npy", 'r') as f:
             self.known_files = ast.literal_eval(f.read())
-
