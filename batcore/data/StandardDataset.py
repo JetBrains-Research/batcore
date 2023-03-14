@@ -4,9 +4,9 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from batcore.alias.utils import get_clusters
 from batcore.data.DatasetBase import DatasetBase
-from batcore.data.utils import ItemMap, is_bot, user_id_split, preprocess_users
+from batcore.data.utils import ItemMap, preprocess_users
+import ast
 
 
 class StandardDataset(DatasetBase):
@@ -34,7 +34,7 @@ class StandardDataset(DatasetBase):
 
     def __init__(self,
                  dataset=None,
-                 max_file=100,
+                 max_file=86,
                  commits=False,
                  comments=False,
                  user_items=False,
@@ -58,6 +58,7 @@ class StandardDataset(DatasetBase):
         if remove == 'none':
             remove = ['owner']
 
+        self.checkpoint = from_checkpoint
         self.bad_pulls = None
         self.max_file = max_file
         self.commits = commits
@@ -90,16 +91,19 @@ class StandardDataset(DatasetBase):
         :return: preprocess all necessary events and returns them as data stream
         """
 
-        pulls = self.get_pulls(dataset)
+        if not self.checkpoint:
+            pulls = self.get_pulls(dataset)
 
-        events = {'pulls': pulls}
-        if self.commits:
-            commits = self.get_commits(dataset)
-            events['commits'] = commits
+            events = {'pulls': pulls}
+            if self.commits:
+                commits = self.get_commits(dataset)
+                events['commits'] = commits
 
-        if self.comments:
-            comments = self.get_comments(dataset)
-            events['comments'] = comments
+            if self.comments:
+                comments = self.get_comments(dataset)
+                events['comments'] = comments
+        else:
+            events = self.data
 
         self.additional_preprocessing(events)
         return events
@@ -186,14 +190,14 @@ class StandardDataset(DatasetBase):
             user_list += events['commits']['key_user'].to_list()
         self.users = ItemMap(user_list)
 
-        if 'pulls' in events:
-            pulls = events['pulls']
-            pulls['reviewer_login'] = pulls['reviewer_login'].apply(lambda x: [self.users.getid(u) for u in x])
-            pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
-        if 'comments' in events:
-            events['comments']['key_user'] = events['comments']['key_user'].apply(lambda x: self.users.getid(x))
-        if 'commits' in events:
-            events['commits']['key_user'] = events['commits']['key_user'].apply(lambda x: self.users.getid(x))
+        # if 'pulls' in events:
+            # pulls = events['pulls']
+            # pulls['reviewer_login'] = pulls['reviewer_login'].apply(lambda x: [self.users.getid(u) for u in x])
+            # pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
+        # if 'comments' in events:
+        #     events['comments']['key_user'] = events['comments']['key_user'].apply(lambda x: self.users.getid(x))
+        # if 'commits' in events:
+        #     events['commits']['key_user'] = events['commits']['key_user'].apply(lambda x: self.users.getid(x))
 
     def itemize_pulls(self, events):
         """
@@ -236,7 +240,30 @@ class StandardDataset(DatasetBase):
         return ret
 
     def from_checkpoint(self, path):
-        raise NotImplementedError
+
+        self.data = {}
+        self.data['pulls'] = pd.read_csv(path + '/pulls.csv', index_col=0)
+
+        self.data['pulls'].date = pd.to_datetime(self.data['pulls'].date).dt.tz_localize(None)
+
+        self.data['pulls'].file_path = self.pulls.file_path.apply(ast.literal_eval)
+        self.data['pulls'].reviewer_login = self.pulls.reviewer_login.apply(ast.literal_eval)
+
+        self.data['pulls'].owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
+        self.data['pulls'].author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
+
+        self.data['pulls'] = self.pulls.fillna('')
+
+        try:
+            self.data['pulls'].reviewer_login = self.pulls.reviewer_login.apply(lambda x: [int(i) for i in x])
+            self.data['pulls'].author = self.pulls.author.apply(lambda x: [int(i) for i in x])
+        except ValueError:
+            pass
+
+        self.data['commits'] = pd.read_csv(path + '/commits.csv', index_col=0)
+        self.data['commits'].date = pd.to_datetime(self.data['commits'].date).dt.tz_localize(None)
+        self.data['comments'] = pd.read_csv(path + '/comments.csv', index_col=0)
+        self.data['comments'].date = pd.to_datetime(self.data['comments'].date).dt.tz_localize(None)
 
     def to_checkpoint(self, path):
         """
