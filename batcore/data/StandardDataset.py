@@ -6,7 +6,7 @@ import pandas as pd
 
 from batcore.bat_logging import Logger
 from batcore.data.DatasetBase import DatasetBase
-from batcore.data.utils import ItemMap, preprocess_users
+from batcore.data.utils import ItemMap, preprocess_users, add_self_review
 import ast
 
 
@@ -31,6 +31,7 @@ class StandardDataset(DatasetBase, Logger):
     :param alias: True if clustering of the users by name should be performed
     :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined automatically. Otherwise, path to the csv with bot accounts should be specified
     :param project_name: name of the project for automatic bot detection
+    :param
     """
 
     def __init__(self,
@@ -50,6 +51,7 @@ class StandardDataset(DatasetBase, Logger):
                  remove_bots=True,
                  bots='auto',
                  project_name='',
+                 self_review_flag=False,
                  from_checkpoint=False,
                  checkpoint_path=None,
                  verbose=False,
@@ -73,10 +75,19 @@ class StandardDataset(DatasetBase, Logger):
         self.commits = commits
         self.comments = comments
 
-
+        dataset = deepcopy(dataset)
         if process_users:
             self.info(f'starting processing users')
-            preprocess_users(dataset, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1)
+            if self_review_flag:
+                dataset_alias = deepcopy(dataset)
+                preprocess_users(dataset_alias, remove_bots, bots, factorize_users, True, project_name, threshold=0.1)
+
+            if self_review_flag and alias:
+                dataset = dataset_alias
+            else:
+                preprocess_users(dataset, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1)
+            if self_review_flag:
+                add_self_review(dataset_alias, dataset)
             self.info(f'finished processing users')
 
         self.user_items = user_items
@@ -174,7 +185,8 @@ class StandardDataset(DatasetBase, Logger):
         commits = dataset.commits
         # remove commits to the bad pulls
         commits = commits[~commits['key_change'].isin(self.bad_pulls)]
-        commits.loc[:, 'type'] = 'commit'
+        if commits.shape[0] > 0:
+            commits.loc[:, 'type'] = 'commit'
         return commits
 
     def get_comments(self, dataset):
@@ -186,7 +198,8 @@ class StandardDataset(DatasetBase, Logger):
         # remove comments to the bad pulls
         comments = comments[~comments['key_change'].isin(self.bad_pulls)]
         # comments['type'] = 'comment'
-        comments.loc[:, 'type'] = 'comment'
+        if comments.shape[0] > 0:
+            comments.loc[:, 'type'] = 'comment'
         return comments
 
     def itemize_users(self, events):

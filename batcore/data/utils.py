@@ -148,11 +148,12 @@ def is_bot(x, project=''):
 
 def preprocess_users(data, remove_bots, bots, factorize_users, alias, project_name, threshold=0.1):
     u1 = pd.unique(data.pulls.owner.sum())
-    u2 = pd.unique(data.pulls.reviewer_login.sum())
+    u2 = pd.unique(data.pulls.reviewer.sum())
     u3 = pd.unique(data.commits.key_user)
     u4 = pd.unique(data.comments.key_user)
+    u5 = pd.unique(data.pulls.author.apply(lambda x: list(x)).sum())
 
-    users = np.unique(np.hstack((u1, u2, u3, u4)))
+    users = np.unique(np.hstack((u1, u2, u3, u4, u5)))
 
     if remove_bots:
         if bots != 'auto':
@@ -165,11 +166,11 @@ def preprocess_users(data, remove_bots, bots, factorize_users, alias, project_na
         users = np.array([u for u in users if u not in bots])
 
         data.pulls['owner'] = data.pulls['owner'].apply(lambda x: [u for u in x if u not in bots])
-        data.pulls['reviewer_login'] = data.pulls['reviewer_login'].apply(lambda x: [u for u in x if u not in bots])
+        data.pulls['reviewer'] = data.pulls['reviewer'].apply(lambda x: [u for u in x if u not in bots])
         data.pulls['author'] = data.pulls['author'].apply(lambda x: [u for u in x if u not in bots])
 
         data.pulls = data.pulls[data.pulls.owner.apply(lambda x: len(x) > 0)]
-        data.pulls = data.pulls[data.pulls.reviewer_login.apply(lambda x: len(x) > 0)]
+        data.pulls = data.pulls[data.pulls.reviewer.apply(lambda x: len(x) > 0)]
 
         data.commits['key_user'] = data.commits['key_user'].apply(lambda x: np.nan if x in bots else x)
         data.comments['key_user'] = data.comments['key_user'].apply(lambda x: np.nan if x in bots else x)
@@ -192,9 +193,20 @@ def preprocess_users(data, remove_bots, bots, factorize_users, alias, project_na
         data.clusters = clusters
         data.pulls.owner = data.pulls.owner.apply(lambda x: list(set([clusters[u] for u in x])))
         data.pulls.author = data.pulls.author.apply(lambda x: list(set([clusters[u] for u in x])))
-        data.pulls.reviewer_login = data.pulls.reviewer_login.apply(lambda x: list(set([clusters[u] for u in x])))
+        data.pulls.reviewer = data.pulls.reviewer.apply(lambda x: list(set([clusters[u] for u in x])))
 
         data.commits.key_user = data.commits.key_user.apply(lambda x: clusters[x])
         data.comments.key_user = data.comments.key_user.apply(lambda x: clusters[x])
 
         return clusters
+
+
+def add_self_review(data_a, data_f):
+    try:
+        data_f.pulls.drop('self_review', axis=1)
+    except KeyError:
+        pass
+
+    data_f.pulls['self_review'] = data_a.pulls.apply(lambda x:
+                                                     len(set(x.reviewer).intersection(set(x.author))) > 0,
+                                                     axis=1)
