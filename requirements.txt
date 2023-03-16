@@ -6,3 +6,4 @@ tqdm~=4.64.0
 nltk~=3.7
 levenshtein==0.20.8
 python-louvain~=0.16
+ray==2.2.0
