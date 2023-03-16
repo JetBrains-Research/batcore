@@ -1,5 +1,5 @@
 from .DatasetBase import DatasetBase
-from .GerritLoader import MRLoaderData
+from .MRLoaderData import MRLoaderData
 from .SpecialDatasets import RevRecDataset, RevFinderDataset, TieDataset
 from .StandardDataset import StandardDataset
 from .DataLoader import *
