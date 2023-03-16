@@ -1,5 +1,5 @@
 from .DatasetBase import DatasetBase
-from .GerritLoader import GerritLoader
+from .GerritLoader import MRLoaderData
 from .SpecialDatasets import RevRecDataset, RevFinderDataset, TieDataset
 from .StandardDataset import StandardDataset
 from .DataLoader import *
@@ -7,7 +7,7 @@ from .aggregators import *
 
 __all__ = [
     "DatasetBase",
-    "GerritLoader",
+    "MRLoaderData",
     "RevRecDataset",
     "RevFinderDataset",
     "TieDataset",

@@ -52,7 +52,6 @@ class StandardDataset(DatasetBase, Logger):
                  bots='auto',
                  project_name='',
                  self_review_flag=False,
-                 from_checkpoint=False,
                  checkpoint_path=None,
                  verbose=False,
                  log_file_path=None,
@@ -62,14 +61,14 @@ class StandardDataset(DatasetBase, Logger):
 
         self.setup_logger(verbose, log_file_path, log_stdout, log_mode)
 
-        if from_checkpoint:
+        if checkpoint_path is not None:
             self.info(f'loading from checkpoint {checkpoint_path}')
             self.from_checkpoint(checkpoint_path)
             self.info(f'finished loading from checkpoint {checkpoint_path}')
         if remove == 'none':
             remove = ['owner']
 
-        self.checkpoint = from_checkpoint
+        self.checkpoint = checkpoint_path is not None
         self.bad_pulls = None
         self.max_file = max_file
         self.commits = commits

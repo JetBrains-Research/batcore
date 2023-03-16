@@ -10,22 +10,22 @@ from batcore.data.utils import time_interval
 from datetime import datetime
 
 
-class GerritLoader(Logger):
+class MRLoaderData(Logger):
     """
         Helping dataset class for the gerrit-based projects. It reads data in the format that is provided with our
         download script and outputs in a comfortable format
 
         :param path: path to the folder with the data from the loader tool or to the saved dataset
         :param from_date: all events before from_date are removed from the data
+        :type from_date: datetime.datetime
         :param to_date: all events after to_date are removed from the data
-        :param from_checkpoint: set to True to load saved dataset
+        :type to_date: datetime.datetime
        """
 
     def __init__(self,
-                 path,
+                 path=None,
                  from_date=None,
                  to_date=None,
-                 from_checkpoint=False,
                  verbose=False,
                  log_file_path=None,
                  log_stdout=False,
@@ -33,24 +33,17 @@ class GerritLoader(Logger):
                  ):
 
         self.setup_logger(verbose, log_file_path, log_stdout, log_mode)
-        if from_checkpoint:
-            self.info(f'loading from checkpoint {path}')
-            self.from_checkpoint(path)
-            self.info(f'finished loading from checkpoint {path}')
-
-        else:
-
+        if path is not None:
             self.from_date = from_date
             self.to_date = to_date
 
             self.info(f"loading gerrit data from {path}")
-            data = GerritLoader.get_df(path)
+            data = MRLoaderData.get_df(path)
             self.info(f"processing data")
             self.pulls, self.commits, self.comments = self.prepare(data)
             self.info(f"additional processing for the pull request")
             self.prepare_pulls()
             self.info(f"finished processing the data")
-
 
     @staticmethod
     def get_df(path):
@@ -216,9 +209,14 @@ class GerritLoader(Logger):
             self.commits.date = pd.to_datetime(self.commits.date).dt.tz_localize(None)
         else:
             self.commits = pd.DataFrame(columns=['key_commit', 'key_change', 'key_file', 'status', 'key_user', 'date'])
+
         if os.path.isfile(path + '/comments.csv'):
             self.comments = pd.read_csv(path + '/comments.csv', index_col=0)
             self.comments.date = pd.to_datetime(self.comments.date).dt.tz_localize(None)
+        else:
+            self.commits = pd.DataFrame(columns=['key_user', 'key_change', 'date', 'key_file'])
+
+        return self
 
     def to_checkpoint(self, path):
         """

@@ -11,12 +11,12 @@ Running implemented models
 
     from batcore.data import PullLoader
     from batcore.tester import RecTester
-    from batcore.data import GerritLoader
+    from batcore.data import MRLoaderData
     from batcore.baselines import CN
     from batcore.data import get_gerrit_dataset
 
     # reloads saved data from the checkpoint
-    data = GerritLoader('projects/openstack', from_checkpoint=True)
+    data = MRLoaderData().from_checkpoint('projects/openstack')
 
     # gets dataset for the CN model. Pull request with more than 56 files are removed
     dataset = get_gerrit_dataset(data, max_file=56, model_cls=CN)
@@ -24,8 +24,8 @@ Running implemented models
     # creates an iterator over dataset that iterates over pull request one-by-one
     data_iterator = PullLoader(dataset, 10)
 
-    # creates a CN model. dataset.get_items2ids() provides model with necessary encodings (eg. users2id, files2id) for
-    # optimization of evaluation
+    # creates a CN model. dataset.get_items2ids() provides model with necessary encodings
+    # (eg. users2id, files2id) for optimization of evaluation
     model = CN(dataset.get_items2ids())
 
     # create a tester object
@@ -40,9 +40,9 @@ Loading dataset from MRLoader output
 
 .. code-block:: python
 
-    from batcore.data import GerritLoader
+    from batcore.data import MRLoaderData
 
-    data = GerritLoader('path', # path to the directory containing output of MRLoader
+    data = MRLoaderData('path', # path to the directory containing output of MRLoader
                          bots='', # path to file with bots or 'auto'
                          project_name='', # name of the project for in case of auto bot detection
                          from_checkpoint=False, # when true reloads saves data
@@ -58,9 +58,9 @@ Creating Dataset from GerritLoader
 
 .. code-block:: python
 
-    from batcore.data import GerritLoader
+    from batcore.data import StandardDataset
 
-    dataset = StandardDataset(dataset,
+    dataset = StandardDataset(data, # instance of MRLoaderData
                               max_file=100, # number of maximum files in a pull request
                               commits=False, # if true commits are included in the dataset
                               comments=False, # if true comments are included in the dataset
@@ -72,7 +72,7 @@ Creating Dataset from GerritLoader
                               remove=[] # list of columns/features that will be removed
                              )
 
-Creating new ARR model
+Creating new model
 ======================
 
 To create new mode one can simply implement abstract class RecommenderBase with `fit` and `predict` methods.

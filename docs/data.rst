@@ -9,7 +9,7 @@ Data Classes
    :no-undoc-members:
    :exclude-members:
 
-.. autoclass:: batcore.data.GerritLoader
+.. autoclass:: batcore.data.MRLoaderData
    :members:
    :no-undoc-members:
    :exclude-members:
