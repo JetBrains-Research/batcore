@@ -29,11 +29,9 @@ class StandardDataset(DatasetBase, Logger):
     :param remove: list of columns to remove from the reviewers. Can be a subset of ['owner', 'author']
     :param factorize_users: when true users are replaced by id
     :param alias: True if clustering of the users by name should be performed
-    :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined
-    automatically. Otherwise, path to the csv with bot accounts should be specified
+    :param bots: strategy for bot identification in user factorization. When 'auto' bots will be determined automatically. Otherwise, path to the csv with bot accounts should be specified
     :param project_name: name of the project for automatic bot detection
-    :param self_review_flag: when true adds a column to the pulls dataframe which signifies that there was a self-review
-     (based on the users aliases)
+    :param self_review_flag: when true adds a column to the pulls dataframe which signifies that there was a self-review (based on the users aliases)
     """
 
     def __init__(self,
