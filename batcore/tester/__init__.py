@@ -1,6 +1,6 @@
 from .TesterBase import TesterBase
-from SimulTester import *
-from RecTester import *
+from .SimulTester import *
+from .RecTester import *
 
 
 __all__ = [
