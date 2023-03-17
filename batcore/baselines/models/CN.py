@@ -160,8 +160,8 @@ class CN(BanRecommenderBase):
 
         best_recs = np.argpartition(-scores, k)[:k]
         sorted_recs = sorted(best_recs, key=lambda x: -self.num_revs[x])
-        if len(sorted_recs) != len(np.unique(sorted_recs)):
-            print('apriori')
+        # if len(sorted_recs) != len(np.unique(sorted_recs)):
+        #     print('apriori')
         return sorted_recs
 
     def predict_community(self, i, k=10):
@@ -205,6 +205,6 @@ class CN(BanRecommenderBase):
                 if len(recs) >= k:
                     break
             ind += 1
-        if len(recs) != len(np.unique(recs)):
-            print('com')
+        # if len(recs) != len(np.unique(recs)):
+        #     print('com')
         return recs

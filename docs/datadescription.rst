@@ -20,9 +20,6 @@ To process the data loaded with `MRLoader <https://github.com/JetBrains-Research
                          to_date=datetime(), # all events after are removed
                         )
 
-    # or load from checkpoint
-    # data = MRLoaderData().from_checkpoint('path/to/checkpoint')
-
 
 Resulting instance of ``MRLoaderData`` has three relevant fields: ``pulls``, ``comments``, and ``commits``.
 
@@ -30,7 +27,7 @@ Dataframes
 ----------
 ``pulls`` is a pandas DataFrame with information about pull requests. It has following fields:
 
-* **key_change** - string identifier of the pull request
+* **key_change** - identifier of the pull request
 * **file** - list of files' paths changed in the pull request
 * **reviewer** - list of reviewers
 * **date** - time of the creation of the pull request (datetime.datetime instance)
@@ -69,4 +66,45 @@ And load with:
 
 .. code-block:: python
 
-    MRLoaderData().from_checkpoint('path/to/checkpoint')
+    data = MRLoaderData().from_checkpoint('path/to/checkpoint')
+
+Custom data
+===========
+
+``from_checkpoint`` method can also be used to load custom data.
+Provided data should be in a specific format.
+Path to checkpoint should lead to the folder with `pulls.csv` and optionally with `comments.csv` and `commits.csv`.
+Those files should have a header with feature names from above and first index column.
+Not all of the features are necessary for all of the models and some of them can be omitted and replaced with nan values.
+All of the relevant columns must contain data in the form described above with the following exceptions:
+
+* `dates` - date-string with the following format "yyyy-mm-dd hh:mm:ss"
+* `user_ids` - can be anything, but if you use our implementation of alias matching it should be a string with the format "{name}:{e-mail}:{login}"
+
+
+Required data for different models
+----------------------------------
+
+* **ACRec**
+    * pulls: date, reviewer, key_change, owner
+    * comments: key_change, key_user
+* **cHRev**
+    * pulls: date, reviewer, key_change, file, owner
+    * comments: date, key_user, key_file
+* **RevFinder**
+    * pulls: date, reviewer, key_change, file, owner
+* **RevRec**
+    * pulls: date, reviewer, key_change, owner, file
+    * comments: date, key_user, key_file, key_change
+* **Tie**
+    * pulls: date, reviewer, key_change, title, file, owner
+* **WRC**
+    * pulls: date, reviewer, key_change, file, owner
+* **xFinder**
+    * pulls: date, reviewer, key_change, owner, file
+    * commits: date, key_user, key_file
+* **CN**
+    * pulls: date, reviewer, key_change, owner
+    * comments: date, key_user, key_change
+
+

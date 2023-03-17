@@ -6,8 +6,8 @@ def pull_sim(pull1, pull2):
     """
     counts file path-based similarity for pull1 and pull2
     """
-    changed_files1 = pull1["file_path"]
-    changed_files2 = pull2["file_path"]
+    changed_files1 = pull1["file"]
+    changed_files2 = pull2["file"]
     if len(changed_files1) == 0 or len(changed_files2) == 0:
         return 0
     sum_score = 0
