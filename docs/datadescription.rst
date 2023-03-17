@@ -28,7 +28,7 @@ Resulting instance of ``MRLoaderData`` has three relevant fields: ``pulls``, ``c
 
 Dataframes
 ----------
-**pulls** is a pandas DataFrame with information about pull requests. It has following fields:
+``pulls`` is a pandas DataFrame with information about pull requests. It has following fields:
 
 * **key_change** - string identifier of the pull request
 * **file** - list of files' paths changed in the pull request
@@ -40,7 +40,7 @@ Dataframes
 * **closed** - date when pull request was closed
 * **author** - set with authors of the pull request (i.e. authors of the commits)
 
-**commits** is a pandas DataFrame with information about commits. It has following fields:
+``commits`` is a pandas DataFrame with information about commits. It has following fields:
 
 * **key_commit** - identifier of the commit
 * **key_change** - id of the pull request with the commit
@@ -48,9 +48,25 @@ Dataframes
 * **key_user** - author of the commit
 * **date** - date of the commit
 
-**comments** is a pandas DataFrame with information about commits. It has following fields:
+``comments`` is a pandas DataFrame with information about commits. It has following fields:
 
 * **key_change** - id of the pull request with the commit
 * **key_file** - file path of the changed file (nan when the comment was made not to the file)
 * **key_user** - author of the commit
 * **date** - date of the commit
+
+Saving and Loading
+------------------
+
+You can save data from ``MRLoaderData`` with:
+
+.. code-block:: python
+
+    data.to_checkpoint('path/to/checkpoint')
+
+
+And load with:
+
+.. code-block:: python
+
+    MRLoaderData().from_checkpoint('path/to/checkpoint')
