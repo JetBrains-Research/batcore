@@ -28,7 +28,7 @@ class CoreWorkloadCounter(CounterBase):
             if pull['date'] > to_date:
                 break
 
-            for reviewer in pull['reviewer_login']:
+            for reviewer in pull['reviewer']:
                 review_count[reviewer] += 1
 
         sorted_counts = sorted(review_count.values(), key=lambda x: -x)

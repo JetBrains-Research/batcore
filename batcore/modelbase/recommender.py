@@ -79,7 +79,7 @@ class BanRecommenderBase(RecommenderBase, ABC):
                         self.last_active[owner] = date
                 except KeyError:
                     pass
-                for reviewer in event['reviewer_login']:
+                for reviewer in event['reviewer']:
                     self.last_active[reviewer] = date
             else:
                 date = event['date']

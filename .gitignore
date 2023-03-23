@@ -20,4 +20,5 @@ tests
 *.ipynb
 *miss*
 sandbox.py
+logs
 

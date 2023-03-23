@@ -32,12 +32,11 @@ class FaRCounter(CounterBase):
                     else:
                         self.when_left[user] = max(self.when_left[user], event['date'] + timedelta(30))
 
-                for file in event['file_path']:
+                for file in event['file']:
                     if file not in self.when_created:
                         self.when_created[file] = event['date']
                     else:
                         self.when_created[file] = min(self.when_created[file], event['date'])
-
 
             elif event['type'] == 'commit' or event['type'] == 'comment':
                 file = event['key_file']
@@ -79,8 +78,8 @@ class FaRCounter(CounterBase):
         # when_known_rev = defaultdict(lambda: {})
 
         for pull in history:
-            for reviewer in pull['reviewer_login']:
-                for file in pull['file_path']:
+            for reviewer in pull['reviewer']:
+                for file in pull['file']:
                     if reviewer not in when_known[file]:
                         when_known[file][reviewer] = pull['date']
                     else:
@@ -91,8 +90,6 @@ class FaRCounter(CounterBase):
                     when_left[reviewer] = pull['date'] + timedelta(30)
                 else:
                     when_left[reviewer] = max(when_left[reviewer], pull['date'] + timedelta(30))
-
-
 
         active_dev = {}
 

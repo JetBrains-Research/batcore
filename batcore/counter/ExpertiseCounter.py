@@ -23,7 +23,7 @@ class ExpertiseCounter(CounterBase):
 
         for event in self.data:
             if event['type'] == 'pull':
-                for file in event['file_path']:
+                for file in event['file']:
                     for user in chain(event['owner'], event['author']):
                         if user not in self.when_known[file]:
                             self.when_known[file][user] = event['date']
@@ -56,8 +56,8 @@ class ExpertiseCounter(CounterBase):
         when_known = copy.deepcopy(self.when_known)
         for event in history:
             if event['type'] == 'pull':
-                for file in event['file_path']:
-                    for user in event['reviewer_login']:
+                for file in event['file']:
+                    for user in event['reviewer']:
                         if user not in when_known[file]:
                             when_known[file][user] = event['date']
                         else:
@@ -73,18 +73,18 @@ class ExpertiseCounter(CounterBase):
 
             cnt += 1
             files_known = 0
-            if len(pull['file_path']) == 0:
+            if len(pull['file']) == 0:
                 continue
 
-            for file in pull['file_path']:
+            for file in pull['file']:
                 if file not in when_known:
                     continue
-                for reviewer in pull['reviewer_login']:
+                for reviewer in pull['reviewer']:
                     if reviewer not in when_known[file]:
                         continue
                     if when_known[file][reviewer] < pull['date']:
                         files_known += 1
                         break
-            expertise += files_known / len(pull['file_path'])
+            expertise += files_known / len(pull['file'])
 
         return expertise

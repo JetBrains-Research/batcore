@@ -61,18 +61,18 @@ class StandardDataset(DatasetBase, Logger):
 
         self.setup_logger(verbose, log_file_path, log_stdout, log_mode)
 
+        self.checkpoint = checkpoint_path is not None
+        self.bad_pulls = None
+        self.max_file = max_file
+        self.commits = commits
+        self.comments = comments
+
         if checkpoint_path is not None:
             self.info(f'loading from checkpoint {checkpoint_path}')
             self.from_checkpoint(checkpoint_path)
             self.info(f'finished loading from checkpoint {checkpoint_path}')
         if remove == 'none':
             remove = ['owner']
-
-        self.checkpoint = checkpoint_path is not None
-        self.bad_pulls = None
-        self.max_file = max_file
-        self.commits = commits
-        self.comments = comments
 
         dataset = deepcopy(dataset)
         if process_users:
@@ -169,7 +169,7 @@ class StandardDataset(DatasetBase, Logger):
         if len(self.remove):
             for col in self.remove:
                 pulls.reviewer = pulls.apply(lambda x: [rev for rev in x['reviewer'] if rev not in x[col]],
-                                                   axis=1)
+                                             axis=1)
 
         # add label
         pulls.loc[:, 'type'] = 'pull'
@@ -216,9 +216,9 @@ class StandardDataset(DatasetBase, Logger):
         self.users = ItemMap(user_list)
 
         # if 'pulls' in events:
-            # pulls = events['pulls']
-            # pulls['reviewer'] = pulls['reviewer'].apply(lambda x: [self.users.getid(u) for u in x])
-            # pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
+        # pulls = events['pulls']
+        # pulls['reviewer'] = pulls['reviewer'].apply(lambda x: [self.users.getid(u) for u in x])
+        # pulls['owner'] = pulls['owner'].apply(lambda x: [self.users.getid(u) for u in x])
         # if 'comments' in events:
         #     events['comments']['key_user'] = events['comments']['key_user'].apply(lambda x: self.users.getid(x))
         # if 'commits' in events:
@@ -271,24 +271,29 @@ class StandardDataset(DatasetBase, Logger):
 
         self.data['pulls'].date = pd.to_datetime(self.data['pulls'].date).dt.tz_localize(None)
 
-        self.data['pulls'].file = self.pulls.file.apply(ast.literal_eval)
-        self.data['pulls'].reviewer = self.pulls.reviewer.apply(ast.literal_eval)
+        self.data['pulls'].file = self.data['pulls'].file.apply(ast.literal_eval)
+        self.data['pulls'].reviewer = self.data['pulls'].reviewer.apply(ast.literal_eval)
 
-        self.data['pulls'].owner = self.pulls.owner.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
-        self.data['pulls'].author = self.pulls.author.apply(lambda x: ast.literal_eval(x) if x is not np.nan else [])
+        self.data['pulls'].owner = self.data['pulls'].owner.apply(
+            lambda x: ast.literal_eval(x) if x is not np.nan else [])
+        self.data['pulls'].author = self.data['pulls'].author.apply(
+            lambda x: ast.literal_eval(x) if x is not np.nan else [])
 
-        self.data['pulls'] = self.pulls.fillna('')
+        self.data['pulls'] = self.data['pulls'].fillna('')
 
         try:
-            self.data['pulls'].reviewer = self.pulls.reviewer.apply(lambda x: [int(i) for i in x])
-            self.data['pulls'].author = self.pulls.author.apply(lambda x: [int(i) for i in x])
+            self.data['pulls'].reviewer = self.data['pulls'].reviewer.apply(lambda x: [int(i) for i in x])
+            self.data['pulls'].author = self.data['pulls'].author.apply(lambda x: [int(i) for i in x])
         except ValueError:
             pass
 
-        self.data['commits'] = pd.read_csv(path + '/commits.csv', index_col=0)
-        self.data['commits'].date = pd.to_datetime(self.data['commits'].date).dt.tz_localize(None)
-        self.data['comments'] = pd.read_csv(path + '/comments.csv', index_col=0)
-        self.data['comments'].date = pd.to_datetime(self.data['comments'].date).dt.tz_localize(None)
+        if self.commits:
+            self.data['commits'] = pd.read_csv(path + '/commits.csv', index_col=0)
+            self.data['commits'].date = pd.to_datetime(self.data['commits'].date).dt.tz_localize(None)
+
+        if self.comments:
+            self.data['comments'] = pd.read_csv(path + '/comments.csv', index_col=0)
+            self.data['comments'].date = pd.to_datetime(self.data['comments'].date).dt.tz_localize(None)
 
     def to_checkpoint(self, path):
         """
