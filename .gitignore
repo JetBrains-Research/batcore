@@ -21,4 +21,5 @@ tests
 *miss*
 sandbox.py
 logs
-
+**/__pycache__/**
+.vscode
