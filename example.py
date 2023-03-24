@@ -9,18 +9,18 @@ from datetime import datetime
 pd.options.mode.chained_assignment = None
 
 if __name__ == '__main__':
-    # loads data of OpenStack from dataset-7/review.openstack_old.org folder with events from 01.07.2011 to 31.05.2012.
-    # All accounts in projects/openstack_old/bots.csv are treated as bots and removed.
+    # loads data of OpenStack from ./raw_dataset/review.opendev.org folder with events from 01.12.2022 to 01.01.2023.
     # Accounts with close names are matched together and encoded to the same id
 
-    data = MRLoaderData('/Users/farshadkazemi/Desktop/phd/MRLoader/dataset/review.opendev.org',
-                        from_date=datetime(year=2022, month=12, day=1),
-                        to_date=datetime(year=2023, month=1, day=1),
-                        )
+    # data = MRLoaderData('./raw_dataset/review.opendev.org',
+    #                     from_date=datetime(year=2022, month=12, day=1),
+    #                     to_date=datetime(year=2023, month=1, day=1),
+    #                     )
+    # data.to_checkpoint('./other_data/openstack_alias')
 
     # reloads saved data from the checkpoint
-    # data = MRLoaderData().from_checkpoint('/Users/farshadkazemi/Desktop/batcore/batcore/projects/openstack_alias')
-
+    data = MRLoaderData().from_checkpoint('./other_data/openstack_alias')
+    
     # gets dataset for the CN model. Pull request with more than 56 files are removed
     dataset = get_gerrit_dataset(data, max_file=56, model_cls=RevRec)
 

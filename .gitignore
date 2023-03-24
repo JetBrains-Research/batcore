@@ -23,3 +23,5 @@ sandbox.py
 logs
 **/__pycache__/**
 .vscode
+.DS_Store
+
