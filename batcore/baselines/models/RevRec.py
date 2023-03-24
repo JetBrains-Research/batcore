@@ -194,12 +194,13 @@ class RevRec(BanRecommenderBase):
 
         for file in pull['file']:
             for f2 in self.com_file:
-                if sim(file, f2) > self.k:
+                if f2 is not None and sim(file, f2) > self.k:
                     for user in self.com_file[f2]:
                         cf[user] += self.com_file[f2][user]
                         cr[user] = max(cr[user], self.com_date[f2][user])
+
         for user in cf:
-            scores_re[user] = cf[user] * (1 - (self.end_date - cr[user]).days / (self.end_date - self.start_date).days)
+            scores_re[user] = cf[user] * (1 - ((self.end_date - cr[user]).seconds/86400) / ((self.end_date - self.start_date).seconds/ 86400))
 
         expertise = np.zeros(self.active_revs)
         for i in range(self.active_revs):
