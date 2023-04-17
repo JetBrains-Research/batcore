@@ -7,3 +7,4 @@ scikit-learn~=0.24.2
 nltk~=3.7
 levenshtein==0.20.8
 ray==2.2.0
+aliasmatching=1.0.0

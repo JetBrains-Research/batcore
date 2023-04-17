@@ -3,7 +3,9 @@ import numpy as np
 import pandas as pd
 from nltk import LancasterStemmer
 
-from batcore.alias.utils import get_clusters
+
+from aliasmatching import BirdMatching
+# from batcore.alias.utils import get_clusters
 
 stemmer = LancasterStemmer()
 
@@ -186,7 +188,8 @@ def preprocess_users(data, remove_bots, bots, factorize_users, alias, project_na
                                      'name': [u[0] for u in users_parts],
                                      'login': [u[2] for u in users_parts],
                                      'initial_id': [u for u in users]})
-            clusters = get_clusters(users_df, distance_threshold=threshold)
+
+            clusters = BirdMatching(distance_threshold=threshold).get_clusters(users_df)
         else:
             clusters = {u: i for i, u in enumerate(users)}
 
