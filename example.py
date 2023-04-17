@@ -1,7 +1,8 @@
-from baselines import *
-from data import *
-from data import StreamDataLoader
-from tester import RecTester
+from batcore.data import PullLoader
+from batcore.tester import RecTester
+from batcore.data import MRLoaderData
+from batcore.baselines import *
+from batcore.data import get_gerrit_dataset
 import pandas as pd
 
 pd.options.mode.chained_assignment = None
@@ -21,13 +22,13 @@ if __name__ == '__main__':
     #                     remove_bots=True)
 
     # reloads saved data from the checkpoint
-    data = GerritLoader('projects/openstack_alias', from_checkpoint=True)
+    data = MRLoaderData('projects/openstack_alias', from_checkpoint=True)
 
     # gets dataset for the CN model. Pull request with more than 56 files are removed
     dataset = get_gerrit_dataset(data, max_file=56, model_cls=RevRec)
 
     # creates an iterator over dataset that iterates over pull request one-by-one
-    data_iterator = StreamDataLoader(dataset, 10)
+    data_iterator = PullLoader(dataset, 10)
 
     # create a CN model. dataset.get_items2ids() provides model with necessary encodings (eg. users2id, files2id) for
     # optimization of evaluation

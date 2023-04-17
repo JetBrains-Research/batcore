@@ -1,10 +1,10 @@
 numpy>=1.21.5
-pandas~=1.3.4
-scikit-learn~=0.24.2
 scipy~=1.6.2
+python-louvain~=0.16
+pandas~=1.3.4
 tqdm~=4.64.0
+scikit-learn~=0.24.2
 nltk~=3.7
 levenshtein==0.20.8
-python-louvain~=0.16
 ray==2.2.0
 aliasmatching=1.0.0

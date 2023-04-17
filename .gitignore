@@ -10,3 +10,15 @@ other_data/Android.json
 notebooks/Counter.ipynb
 review.openstack.org
 /other_data/
+batcore.egg-info
+checkpoints
+data_checkpoint
+dist
+raw_dataset
+results
+tests
+*.ipynb
+*miss*
+sandbox.py
+logs
+
