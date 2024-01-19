@@ -165,7 +165,7 @@ class StandardDataset(DatasetBase, Logger):
             raise ValueError(f'Wrong owner_policy {self.owner_policy}')
 
         # pulls.reviewer = pulls.reviewer.apply(lambda x: [int(i) for i in x])
-
+        # print(pulls.shape)
         if len(self.remove):
             for col in self.remove:
                 pulls.reviewer = pulls.apply(lambda x: [rev for rev in x['reviewer'] if rev not in x[col]],

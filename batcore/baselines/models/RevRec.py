@@ -244,7 +244,8 @@ class RevRec(BanRecommenderBase):
                 if 'key_file' in event:
 
                     file = event['key_file']
-
+                    if file != file:
+                        continue
                     self.com_file[file][user] += 1
                     self.com_date[file][user] = event['date']
 

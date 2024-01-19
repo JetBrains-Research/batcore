@@ -137,8 +137,9 @@ class CN(BanRecommenderBase):
             v = q.get()
             neighbours_1 = self.w.getcol(v).nonzero()[0]
             neighbours = neighbours_1[mark[neighbours_1] == 0]
-            scores = self.w[v, neighbours].toarray()
-            for j in np.argsort(-scores)[0]:
+            # scores = self.w[v, neighbours].toarray()
+            scores = self.w.getrow(v).toarray()[0][neighbours]
+            for j in np.argsort(-scores):
                 v_nb = neighbours[j]
                 mark[v_nb] = 1
                 if v_nb not in recs:
