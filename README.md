@@ -3,7 +3,7 @@
 ## Documentation
 
 Extensive documentation for Bat CoRe can be found [here](https://batcore.readthedocs.io/en/latest/).
-Bat CoRe can be installed via [pip](https://pypi.org/project/batcore/0.1.1/) 
+Bat CoRe can be installed via [pip](https://pypi.org/project/batcore/0.1.1/):
 
 ```pip install batcore```
 
