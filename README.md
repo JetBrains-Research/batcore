@@ -1,6 +1,11 @@
 # Bat CoRe: Baselines and testing framework for code reviewer recommendations
 
+## Documentation
 
+Extensive documentation for Bat CoRe can be found [here](https://batcore.readthedocs.io/en/latest/).
+Bat CoRe can be installed via [pip](https://pypi.org/project/batcore/0.1.1/) 
+
+```pip install batcore```
 
 ## Framework
 This repository provides a framework for testing code review recommendation algorithms.
