@@ -61,9 +61,9 @@ class MRLoaderData(Logger):
                     file_path = os.path.join(root, file)
                     if file.endswith('.csv'):
                         cur_data.append(
-                            pd.read_csv(file_path, sep='|', on_bad_lines='skip'))  # todo remove on bad lines
+                            pd.read_csv(file_path, sep='|'))  # todo remove on bad lines
             data[d] = pd.concat(cur_data, axis=0).reset_index()
-
+        print('loaded')
         return data
 
     def prepare(self, data):

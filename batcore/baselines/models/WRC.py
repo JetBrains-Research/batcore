@@ -102,7 +102,7 @@ class WRC(BanRecommenderBase):
         scores = res.sum(axis=0)
 
         self.pool_cnt += 1
-        if self.pool_cnt == 20:
+        if self.pool_cnt == 5:
             ray.shutdown()
             ray.init()
             self.p = Pool(10)

@@ -158,14 +158,14 @@ class StandardDataset(DatasetBase, Logger):
             pulls.owner = pulls.author
             pulls = pulls.dropna()
         elif self.owner_policy == 'author_owner_fallback':
-            pulls.owner = pulls.apply(lambda x: x.author if len(x.author) else x.owner, axis=1)
+            pulls.owner = pulls.apply(lambda x: list(x.author) if len(x.author) else (x.owner), axis=1)
         # elif self.owner_policy == 'none':
         #     pulls.owner = pulls.owner.apply(lambda x: [int(i) for i in x])
         else:
             raise ValueError(f'Wrong owner_policy {self.owner_policy}')
 
         # pulls.reviewer = pulls.reviewer.apply(lambda x: [int(i) for i in x])
-
+        # print(pulls.shape)
         if len(self.remove):
             for col in self.remove:
                 pulls.reviewer = pulls.apply(lambda x: [rev for rev in x['reviewer'] if rev not in x[col]],

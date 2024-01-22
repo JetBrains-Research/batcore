@@ -11,11 +11,16 @@ class PRCF(BanRecommenderBase):
     """
     dataset - comments, user_items, pull_items
     """
-    def __init__(self, users, pulls,
-                 lambd=0.7, emd=20,
+    def __init__(self,
+                 users,
+                 pulls,
+                 lambd=0.7,
+                 emd=20,
                  k=0.5, d=30,
-                 delta=500, freq=100,
-                 lr=1e-3, num_epochs=10,
+                 delta=500,
+                 freq=100,
+                 lr=1e-3,
+                 num_epochs=10,
                  lambd2=0.05,
                  no_owner=True,
                  no_inactive=True,
