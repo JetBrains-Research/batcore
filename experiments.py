@@ -71,7 +71,6 @@ def test_project_metrics(models_cls, path=None, data_path=None, data_args=None, 
     if data_path is None:
         data_path = 'projects/openstack'
 
-    # data = MRLoaderData(data_path, None, None, True)
     for mdl_cls in models_cls:
         setup = model_setup[mdl_cls.__name__]
         dataset_kwargs = deepcopy(setup['dataset_kwargs'])
@@ -98,29 +97,33 @@ def test_project_metrics(models_cls, path=None, data_path=None, data_args=None, 
 
 if __name__ == '__main__':
     models = [
-        # xFinder,
-        # ACRec,
-        # cHRev,
-        # CN, later
+        xFinder,
+        ACRec,
+        cHRev,
+        CN,
         Tie,
-        # RevRec, later
-        # RevFinder, later
-        # WRC, todo
+        RevRec,
+        RevFinder,
+        WRC,
     ]
 
-    try:
-        test_project_metrics(models,
-                             path='results/openstack_new/project_metrics/tie',
-                             data_path='data/dataset/openstack_new',
-                             filter_args={'no_owner': True, 'no_inactive': False, 'inactive_time': 30},
-                             data_args={'remove_empty': False},
-                             dataset_name='openstack')
-    except:
-        logging.exception('GOT AN EXCEPTION')
-        raise
+    # uncomment for project wide metrics
 
-    # test_recommendation_metrics(models,
-    #                             path='results/openstack_new/cn',
-    #                             data_path='data/dataset/openstack_new',
-    #                             filter_args={'no_owner': True, 'no_inactive': False, 'inactive_time': 30},
-    #                             data_args={'remove_empty': True})
+    # try:
+    #     test_project_metrics(models,
+    #                          path='results/openstack_new/project_metrics/revfinder',
+    #                          data_path='data/dataset/openstack_new',
+    #                          filter_args={'no_owner': True, 'no_inactive': False, 'inactive_time': 30},
+    #                          data_args={'remove_empty': False},
+    #                          dataset_name='openstack')
+    # except:
+    #     logging.exception('GOT AN EXCEPTION')
+    #     raise
+
+    # uncomment for recommendation metrics
+
+    test_recommendation_metrics(models,
+                                path='results/openstack_new/cn',
+                                data_path='data/dataset/openstack_new',
+                                filter_args={'no_owner': True, 'no_inactive': False, 'inactive_time': 30},
+                                data_args={'remove_empty': True})
